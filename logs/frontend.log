@@ -2,8 +2,24 @@
 > frontend@0.0.0 dev
 > vite
 
+6:21:49 PM [vite] (client) Re-optimizing dependencies because lockfile has changed
 
-  VITE v6.3.5  ready in 170 ms
+  VITE v6.3.5  ready in 854 ms
 
   ➜  Local:   http://localhost:5173/
   ➜  Network: use --host to expose
+  ➜  Vue DevTools: Open http://localhost:5173/__devtools__/ as a separate window
+  ➜  Vue DevTools: Press Option(⌥)+Shift(⇧)+D in App to toggle the Vue DevTools
+
+Could not open Sidebar.vue in the editor.
+The editor process exited with an error: spawn code ENOENT ('code' command does not exist in 'PATH').
+
+6:25:25 PM [vite] (client) hmr update /src/components/Sidebar.vue
+6:26:02 PM [vite] (client) hmr update /src/components/Sidebar.vue
+6:28:22 PM [vite] (client) hmr update /src/components/Sidebar.vue
+6:28:58 PM [vite] (client) hmr update /src/components/Sidebar.vue
+6:30:56 PM [vite] (client) hmr update /src/pages/Topic1Page1.vue, /src/pages/Topic1Page1.vue?vue&type=style&index=0&scoped=9b469fe9&lang.css
+6:33:00 PM [vite] (client) hmr update /src/pages/Topic1Page1.vue, /src/pages/Topic1Page1.vue?vue&type=style&index=0&scoped=9b469fe9&lang.css
+6:37:06 PM [vite] (client) hmr update /src/pages/Topic1Page1.vue, /src/pages/Topic1Page1.vue?vue&type=style&index=0&scoped=9b469fe9&lang.css
+6:37:06 PM [vite] (client) ✨ new dependencies optimized: three
+6:37:06 PM [vite] (client) ✨ optimized dependencies changed. reloading

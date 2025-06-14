@@ -20,3 +20,6 @@ The editor process exited with an error: spawn code ENOENT ('code' command does 
 6:28:58 PM [vite] (client) hmr update /src/components/Sidebar.vue
 6:30:56 PM [vite] (client) hmr update /src/pages/Topic1Page1.vue, /src/pages/Topic1Page1.vue?vue&type=style&index=0&scoped=9b469fe9&lang.css
 6:33:00 PM [vite] (client) hmr update /src/pages/Topic1Page1.vue, /src/pages/Topic1Page1.vue?vue&type=style&index=0&scoped=9b469fe9&lang.css
+6:37:06 PM [vite] (client) hmr update /src/pages/Topic1Page1.vue, /src/pages/Topic1Page1.vue?vue&type=style&index=0&scoped=9b469fe9&lang.css
+6:37:06 PM [vite] (client) ✨ new dependencies optimized: three
+6:37:06 PM [vite] (client) ✨ optimized dependencies changed. reloading

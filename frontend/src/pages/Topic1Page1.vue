@@ -1,6 +1,13 @@
+// @ts-ignore
+// eslint-disable-next-line
+// TypeScript module declaration for STLLoader
+// If you want to avoid this warning globally, create a .d.ts file in your project
+// with: declare module 'three/examples/jsm/loaders/STLLoader';
+
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import * as THREE from 'three'
+import { STLLoader } from 'three/examples/jsm/loaders/STLLoader'
 
 // Reference to the split container
 const splitContainer = ref<HTMLElement | null>(null)
@@ -16,6 +23,8 @@ let cube: THREE.Mesh
 
 // Initial width of the left panel (in percentage)
 const leftPanelWidth = ref(50)
+
+const fileInput = ref<HTMLInputElement | null>(null)
 
 // Initialize Three.js scene
 const initThreeJs = () => {
@@ -116,6 +125,35 @@ const stopResize = () => {
   document.removeEventListener('mouseup', stopResize)
 }
 
+// Function to trigger file input
+const triggerFileInput = () => {
+  fileInput.value?.click()
+}
+
+// Function to handle file selection and load STL
+const handleFileChange = (event: Event) => {
+  const input = event.target as HTMLInputElement
+  if (!input.files || input.files.length === 0) return
+  const file = input.files[0]
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    const contents = e.target?.result
+    if (!contents || !visualizationContainer.value) return
+    // Remove previous STL mesh if any
+    if (cube) {
+      scene.remove(cube)
+    }
+    const loader = new STLLoader()
+    const geometry = loader.parse(contents as ArrayBuffer)
+    const material = new THREE.MeshPhongMaterial({ color: 0x93c5fd, shininess: 60 })
+    const mesh = new THREE.Mesh(geometry, material)
+    scene.add(mesh)
+    cube = mesh
+    // Optionally, center camera or mesh here
+  }
+  reader.readAsArrayBuffer(file)
+}
+
 // Initialize Three.js when component is mounted
 onMounted(() => {
   initThreeJs()
@@ -124,9 +162,8 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="page-container">
-    <!-- Chapter Header Section -->
-    <header class="bg-gray-100 py-16 mb-12">
+  <div class="main-flex-root">
+    <div class="page-container" style="width: 100%">
       <div class="max-w-7xl mx-auto px-8">
         <div class="text-sm text-gray-600 mb-2">Chapter 1</div>
         <h1 class="text-5xl font-bold mb-4">Basic Probability</h1>
@@ -134,58 +171,62 @@ onMounted(() => {
           This chapter is an introduction to the basic concepts of probability theory.
         </p>
       </div>
-    </header>
-
-    <!-- Split Panel Container -->
-    <div 
-      ref="splitContainer"
-      class="split-container max-w-7xl mx-auto px-8"
-    >
-      <!-- Left Panel - Content -->
+      <!-- Split Panel Container -->
       <div 
-        ref="leftPanel"
-        class="left-panel"
-        :style="{ width: `${leftPanelWidth}%` }"
+        ref="splitContainer"
+        class="split-container max-w-7xl mx-auto px-8"
       >
-        <section class="pr-8">
-          <h2 class="text-3xl font-bold mb-6">Chance Events</h2>
-          <p class="text-lg leading-relaxed mb-6">
-            Randomness is all around us. Probability theory is the mathematical framework that allows us 
-            to analyze chance events in a logically sound manner. The probability of an event is a number 
-            indicating how likely that event will occur. This number is always between 0 and 1, where 0 
-            indicates impossibility and 1 indicates certainty.
-          </p>
+        <!-- Left Panel - Content -->
+        <div 
+          ref="leftPanel"
+          class="left-panel"
+          :style="{ width: `${leftPanelWidth}%` }"
+        >
+          <section class="pr-8">
+            <h2 class="text-3xl font-bold mb-6">Chance Events</h2>
+            <p class="text-lg leading-relaxed mb-6">
+              Randomness is all around us. Probability theory is the mathematical framework that allows us 
+              to analyze chance events in a logically sound manner. The probability of an event is a number 
+              indicating how likely that event will occur. This number is always between 0 and 1, where 0 
+              indicates impossibility and 1 indicates certainty.
+            </p>
 
-          <!-- Mathematical Expression -->
-          <div class="bg-gray-50 rounded-lg p-6 mb-8">
-            <p class="text-lg mb-4">The mathematical expression for probability can be written as:</p>
-            <div class="flex justify-center">
-              <div class="bg-white px-8 py-4 rounded shadow-sm">
-                P(E) = n(E) / n(S)
+            <!-- Mathematical Expression -->
+            <div class="bg-gray-50 rounded-lg p-6 mb-8">
+              <p class="text-lg mb-4">The mathematical expression for probability can be written as:</p>
+              <div class="flex justify-center">
+                <div class="bg-white px-8 py-4 rounded shadow-sm">
+                  P(E) = n(E) / n(S)
+                </div>
               </div>
             </div>
-          </div>
-        </section>
-      </div>
+          </section>
+        </div>
 
-      <!-- Resizer -->
-      <div 
-        class="resizer"
-        @mousedown="startResize"
-      ></div>
+        <!-- Resizer -->
+        <div 
+          class="resizer"
+          @mousedown="startResize"
+        ></div>
 
-      <!-- Right Panel - Visualization -->
-      <div 
-        class="right-panel"
-        :style="{ width: `${100 - leftPanelWidth}%` }"
-      >
-        <div class="visualization-container">
-          <div class="bg-white rounded-lg shadow-lg p-8 h-full">
-            <h3 class="text-2xl font-semibold mb-4">Interactive 3D Visualization</h3>
-            <div 
-              ref="visualizationContainer"
-              class="visualization-content rounded-lg"
-            ></div>
+        <!-- Right Panel - Visualization -->
+        <div 
+          class="right-panel"
+          :style="{ width: `${100 - leftPanelWidth}%` }"
+        >
+          <div class="visualization-container">
+            <div class="bg-white rounded-lg shadow-lg p-8 h-full">
+              <h3 class="text-2xl font-semibold mb-4">Interactive 3D Visualization</h3>
+              <div 
+                ref="visualizationContainer"
+                class="visualization-content rounded-lg"
+              ></div>
+              <!-- STL Import Button -->
+              <div class="flex flex-col items-center mt-4">
+                <button @click="triggerFileInput" class="bg-blue-400 hover:bg-blue-500 text-white font-semibold py-2 px-4 rounded shadow mb-2">Import .stl file</button>
+                <input ref="fileInput" type="file" accept=".stl" class="hidden" @change="handleFileChange" />
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -194,9 +235,20 @@ onMounted(() => {
 </template>
 
 <style scoped>
+.main-flex-root {
+  display: flex;
+  min-height: 100vh;
+}
+
 .page-container {
   min-height: 100vh;
   background-color: #ffffff;
+}
+
+@media (max-width: 768px) {
+  .page-container {
+    padding-left: 0;
+  }
 }
 
 .split-container {

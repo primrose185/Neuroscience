@@ -63,14 +63,13 @@ const handleMenuClick = (item: MenuItem) => {
 </script>
 
 <template>
-  <div class="bg-white text-gray-800 min-h-screen">
+  <div class="app-layout bg-white text-gray-800 min-h-screen flex">
     <Sidebar 
       :menu-items="menuItems"
       :is-open="sidebarOpen"
       @toggle-sidebar="handleSidebarToggle"
       @menu-click="handleMenuClick"
     />
-    
     <!-- Main Content -->
     <main class="main-content">
       <router-view></router-view>
@@ -79,12 +78,14 @@ const handleMenuClick = (item: MenuItem) => {
 </template>
 
 <style scoped>
+.app-layout {
+  display: flex;
+  min-height: 100vh;
+}
 .main-content {
-  margin-left: 20%;
-  width: 80%;
+  flex: 1;
   transition: margin-left 0.3s;
 }
-
 @media (max-width: 768px) {
   .main-content {
     margin-left: 0;

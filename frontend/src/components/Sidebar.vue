@@ -34,7 +34,7 @@ const handleHomeClick = () => {
 </script>
 
 <template>
-  <nav :class="['sidebar p-6 fixed top-0 left-0 h-full z-20 bg-gray-50 border-r border-gray-200 overflow-y-auto transition-transform', isOpen ? 'open' : '']">
+  <nav :class="['sidebar p-6 relative h-full z-20 bg-gray-50 border-r border-gray-200 overflow-y-auto transition-transform', isOpen ? 'open' : '']">
     <div class="flex items-center justify-between mb-8">
       <button @click="handleHomeClick" class="text-xl font-bold text-gray-900 hover:text-gray-600">Home</button>
     </div>
@@ -79,7 +79,9 @@ const handleHomeClick = () => {
   width: 20%;
   min-width: 220px;
   max-width: 300px;
+  height: 100vh;
   transition: transform 0.3s ease-in-out;
+  position: relative;
 }
 
 @media (max-width: 768px) {

@@ -13,7 +13,8 @@ interface Props {
   isOpen: boolean
 }
 
-const props = defineProps<Props>()
+const { menuItems, isOpen } = defineProps<Props>()
+
 const emit = defineEmits(['toggleSidebar', 'menuClick'])
 const router = useRouter()
 

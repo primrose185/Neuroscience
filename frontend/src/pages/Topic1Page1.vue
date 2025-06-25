@@ -136,8 +136,8 @@ const handleFileChange = (event: Event) => {
   if (!input.files || input.files.length === 0) return
   const file = input.files[0]
   const reader = new FileReader()
-  reader.onload = (e) => {
-    const contents = e.target?.result
+  reader.onload = (_e) => {
+    const contents = _e.target?.result
     if (!contents || !visualizationContainer.value) return
     // Remove previous STL mesh if any
     if (cube) {

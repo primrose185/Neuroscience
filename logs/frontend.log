@@ -3,20 +3,9 @@
 > vite
 
 
-  VITE v6.3.5  ready in 695 ms
+  VITE v6.3.5  ready in 575 ms
 
   ➜  Local:   http://localhost:5173/
   ➜  Network: use --host to expose
   ➜  Vue DevTools: Open http://localhost:5173/__devtools__/ as a separate window
   ➜  Vue DevTools: Press Option(⌥)+Shift(⇧)+D in App to toggle the Vue DevTools
-1:45:59 PM [vite] (client) hmr update /src/pages/Topic1Page1.vue, /src/pages/Topic1Page1.vue?vue&type=style&index=0&scoped=9b469fe9&lang.css
-1:47:17 PM [vite] (client) hmr update /src/pages/Topic1Page1.vue
-1:49:55 PM [vite] (client) hmr update /src/pages/Topic1Page1.vue, /src/pages/Topic1Page1.vue?vue&type=style&index=0&scoped=9b469fe9&lang.css
-1:52:57 PM [vite] (client) hmr update /src/pages/Topic1Page1.vue
-1:55:22 PM [vite] (client) hmr update /src/pages/Topic1Page1.vue, /src/pages/Topic1Page1.vue?vue&type=style&index=0&scoped=9b469fe9&lang.css
-2:14:09 PM [vite] (client) hmr update /src/App.vue, /src/App.vue?vue&type=style&index=0&scoped=7a7a37b1&lang.css
-2:14:12 PM [vite] (client) hmr update /src/components/Sidebar.vue, /src/components/Sidebar.vue?vue&type=style&index=0&scoped=6dec5f19&lang.css
-2:15:44 PM [vite] (client) hmr update /src/pages/Topic1Page1.vue
-2:21:58 PM [vite] (client) hmr update /src/pages/Topic1Page1.vue
-2:21:58 PM [vite] (client) ✨ new dependencies optimized: three/examples/jsm/loaders/STLLoader
-2:21:58 PM [vite] (client) ✨ optimized dependencies changed. reloading

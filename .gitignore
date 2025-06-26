@@ -79,3 +79,4 @@ wheels/
 venv/
 ENV/ 
 .vercel
+logs/

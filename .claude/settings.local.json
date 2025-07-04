@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(yarn test:*)",
+      "Bash(git commit:*)"
+    ],
+    "deny": []
+  }
+}

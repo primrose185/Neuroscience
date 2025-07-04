@@ -80,3 +80,4 @@ venv/
 ENV/ 
 .vercel
 logs/
+*.pid

@@ -16,7 +16,7 @@ const sidebarOpen = ref(false)
 const menuItems: MenuItem[] = [
   {
     id: 'topic1',
-    title: 'Topic 1',
+    title: 'Hartline et al.—Title, 19somethign',
     path: '/topic1/page1',
     children: [
       {
@@ -84,6 +84,8 @@ const handleMenuClick = (item: MenuItem) => {
 }
 .main-content {
   flex: 1;
+  margin-left: 20vw;
+  width: 80vw;
   transition: margin-left 0.3s;
 }
 @media (max-width: 768px) {

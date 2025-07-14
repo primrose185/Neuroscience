@@ -5,6 +5,27 @@
 // with: declare module 'three/examples/jsm/loaders/STLLoader';
 
 <script setup lang="ts">
+// Page metadata for search indexing
+const pageMetadata = {
+  id: 'topic1-page1',
+  title: 'Basic Probability',
+  content: 'Randomness is all around us. Probability theory is the mathematical framework that allows us to analyze chance events in a logically sound manner. The probability of an event is a number indicating how likely that event will occur. This number is always between 0 and 1, where 0 indicates impossibility and 1 indicates certainty.',
+  excerpt: 'Introduction to the basic concepts of probability theory and chance events.',
+  path: '/topic1/page1',
+  tags: ['probability', 'mathematics', 'statistics', 'theory', 'chance-events', 'mathematical-framework'],
+  category: 'Mathematics',
+  type: 'page' as const,
+  metadata: {
+    chapter: 'Chapter 1',
+    difficulty: 'beginner' as const,
+    estimatedReadTime: 5
+  }
+}
+
+// Export metadata for search indexing (this could be used by a build script or search system)
+if (typeof window !== 'undefined') {
+  (window as any).__pageMetadata = pageMetadata
+}
 import { ref, onMounted } from 'vue'
 import * as THREE from 'three'
 import { STLLoader } from 'three/examples/jsm/loaders/STLLoader'
@@ -166,9 +187,9 @@ onMounted(() => {
     <div class="page-container" style="width: 100%">
       <div class="max-w-7xl mx-auto px-8">
         <div class="text-sm text-gray-600 mb-2">Chapter 1</div>
-        <h1 class="text-5xl font-bold mb-4">Basic Probability</h1>
+        <h1 class="text-5xl font-bold mb-4">Hartline et al.—Title, 19something</h1>
         <p class="text-xl text-gray-700">
-          This chapter is an introduction to the basic concepts of probability theory.
+          This chapter covers the fundamental concepts of probability theory and advanced mathematical applications.
         </p>
       </div>
       <!-- Split Panel Container -->
@@ -182,8 +203,9 @@ onMounted(() => {
           class="left-panel"
           :style="{ width: `${leftPanelWidth}%` }"
         >
-          <section class="pr-8">
-            <h2 class="text-3xl font-bold mb-6">Chance Events</h2>
+          <!-- Section 1: Basic Probability -->
+          <section id="basic-probability" class="pr-8 mb-16">
+            <h2 class="text-3xl font-bold mb-6">Basic Probability</h2>
             <p class="text-lg leading-relaxed mb-6">
               Randomness is all around us. Probability theory is the mathematical framework that allows us 
               to analyze chance events in a logically sound manner. The probability of an event is a number 
@@ -197,6 +219,43 @@ onMounted(() => {
               <div class="flex justify-center">
                 <div class="bg-white px-8 py-4 rounded shadow-sm">
                   P(E) = n(E) / n(S)
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Section 2: Advanced Concepts -->
+          <section id="advanced-concepts" class="pr-8">
+            <h2 class="text-3xl font-bold mb-6">Advanced Concepts</h2>
+            <p class="text-lg leading-relaxed mb-6">
+              Building upon basic probability theory, we explore advanced concepts including conditional probability, 
+              Bayes' theorem, and statistical inference. These concepts provide deeper insights into statistical 
+              modeling and decision making under uncertainty.
+            </p>
+
+            <!-- Conditional Probability -->
+            <div class="bg-blue-50 rounded-lg p-6 mb-6">
+              <h3 class="text-xl font-semibold mb-4">Conditional Probability</h3>
+              <p class="text-base leading-relaxed mb-4">
+                Conditional probability measures the likelihood of an event occurring given that another event has already occurred.
+              </p>
+              <div class="flex justify-center">
+                <div class="bg-white px-6 py-3 rounded shadow-sm">
+                  P(A|B) = P(A ∩ B) / P(B)
+                </div>
+              </div>
+            </div>
+
+            <!-- Bayes' Theorem -->
+            <div class="bg-green-50 rounded-lg p-6 mb-8">
+              <h3 class="text-xl font-semibold mb-4">Bayes' Theorem</h3>
+              <p class="text-base leading-relaxed mb-4">
+                Bayes' theorem describes the probability of an event based on prior knowledge of conditions 
+                that might be related to the event.
+              </p>
+              <div class="flex justify-center">
+                <div class="bg-white px-6 py-3 rounded shadow-sm">
+                  P(A|B) = P(B|A) × P(A) / P(B)
                 </div>
               </div>
             </div>

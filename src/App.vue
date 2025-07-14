@@ -17,29 +17,44 @@ const menuItems: MenuItem[] = [
   {
     id: 'topic1',
     title: 'Hartline et al.—Title, 19somethign',
-    path: '/topic1/page1',
+    path: '/topic1',
     children: [
       {
         id: 'section-1-1',
-        title: 'Sub-topic 1.1',
-        path: '/topic1/page1'
+        title: 'Basic Probability',
+        path: '/topic1#basic-probability'
       },
       {
         id: 'section-1-2',
-        title: 'Sub-topic 1.2',
-        path: '/topic1/page2'
+        title: 'Advanced Concepts',
+        path: '/topic1#advanced-concepts'
       }
     ]
   },
   {
     id: 'topic2',
     title: 'Topic 2',
-    path: '/topic2/page1',
+    path: '/topic2',
     children: [
       {
         id: 'section-2-1',
-        title: 'Sub-topic 2.1',
-        path: '/topic2/page1'
+        title: 'Neuroscience Fundamentals',
+        path: '/topic2#neuroscience-fundamentals'
+      },
+      {
+        id: 'section-2-2',
+        title: 'Neural Circuits and Connectivity',
+        path: '/topic2#neural-circuits'
+      },
+      {
+        id: 'section-2-3',
+        title: 'Brain Imaging and Analysis',
+        path: '/topic2#brain-imaging'
+      },
+      {
+        id: 'section-2-4',
+        title: 'Computational Neuroscience',
+        path: '/topic2#computational-neuroscience'
       }
     ]
   },

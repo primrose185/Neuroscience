@@ -1,4 +1,26 @@
 <script setup lang="ts">
+// Page metadata for search indexing
+const pageMetadata = {
+  id: 'topic1-page2',
+  title: 'Advanced Probability Concepts',
+  content: 'Advanced concepts in probability theory including conditional probability, Bayes theorem, and statistical inference. These concepts build upon basic probability to provide deeper insights into statistical modeling and decision making.',
+  excerpt: 'Advanced probability concepts for deeper understanding including conditional probability and Bayes theorem.',
+  path: '/topic1/page2',
+  tags: ['probability', 'conditional', 'bayes', 'advanced', 'statistical-inference', 'theorem'],
+  category: 'Mathematics',
+  type: 'page' as const,
+  metadata: {
+    chapter: 'Chapter 1',
+    difficulty: 'intermediate' as const,
+    estimatedReadTime: 8
+  }
+}
+
+// Export metadata for search indexing
+if (typeof window !== 'undefined') {
+  (window as any).__pageMetadata = pageMetadata
+}
+
 import { onMounted, onUnmounted, ref } from 'vue'
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'

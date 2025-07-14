@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(yarn test:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(python:*)"
     ],
     "deny": []
   }

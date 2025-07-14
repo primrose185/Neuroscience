@@ -14,6 +14,14 @@ class BlenderModelViewer {
     this.clock = new THREE.Clock();
     this.animations = [];
     this.currentModel = null;
+    this.voltageData = null;
+    this.voltageAnimation = {
+      isPlaying: false,
+      currentFrame: 0,
+      totalFrames: 0,
+      speed: 1.0,
+      meshMap: new Map() // Maps mesh names to section data
+    };
     
     // Default options
     this.options = {
@@ -68,7 +76,7 @@ class BlenderModelViewer {
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    this.renderer.outputEncoding = THREE.sRGBEncoding;
+    this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1;
     
@@ -166,11 +174,41 @@ class BlenderModelViewer {
         model.rotation.set(options.rotation.x, options.rotation.y, options.rotation.z);
       }
       
-      // Enable shadows
+      // Enable shadows and debug model data
       model.traverse((child) => {
         if (child.isMesh) {
           child.castShadow = true;
           child.receiveShadow = true;
+          
+          // Debug vertex attributes
+          console.log('Mesh:', child.name);
+          console.log('Geometry attributes:', Object.keys(child.geometry.attributes));
+          
+          // Check for Voltage attribute specifically
+          if (child.geometry.attributes.Voltage) {
+            console.log('✓ Voltage attribute found:', child.geometry.attributes.Voltage);
+          } else {
+            console.log('✗ No Voltage attribute found');
+          }
+          
+          // Debug materials
+          console.log('Material:', child.material);
+          if (child.material.userData) {
+            console.log('Material userData:', child.material.userData);
+          }
+          
+          // Apply fallback emission material if Voltage attribute missing
+          if (!child.geometry.attributes.Voltage) {
+            const emissionMaterial = new THREE.MeshStandardMaterial({
+              color: 0x4444ff,
+              emissive: 0x002288,
+              emissiveIntensity: 0.3,
+              metalness: 0.1,
+              roughness: 0.7
+            });
+            child.material = emissionMaterial;
+            console.log('Applied fallback emission material');
+          }
         }
       });
       
@@ -188,11 +226,27 @@ class BlenderModelViewer {
       // Add to scene
       this.scene.add(model);
       
+      // Create mesh mapping for voltage data if available
+      if (this.voltageData) {
+        this.mapVoltageDataToMeshes();
+      }
+      
       // Auto-fit camera if specified
       if (options.fitCamera !== false) {
         this.fitCameraToModel(model);
       }
       
+      // Debug animation data
+      console.log('Available animations:', gltf.animations);
+      gltf.animations.forEach((anim, index) => {
+        console.log(`Animation ${index}:`, anim.name);
+        console.log('Tracks:', anim.tracks.map(track => ({
+          name: track.name,
+          type: track.ValueTypeName,
+          times: track.times.length
+        })));
+      });
+
       console.log('Model loaded successfully:', modelPath);
       return { model, animations: this.animations };
       
@@ -281,6 +335,154 @@ class BlenderModelViewer {
     this.scene.background = texture;
   }
   
+  async loadVoltageData(jsonPath) {
+    try {
+      console.log('Loading voltage animation data:', jsonPath);
+      
+      const response = await fetch(jsonPath);
+      if (!response.ok) {
+        throw new Error(`Failed to load voltage data: ${response.status}`);
+      }
+      
+      this.voltageData = await response.json();
+      
+      // Validate data structure
+      if (!this.voltageData.sections || !this.voltageData.metadata) {
+        throw new Error('Invalid voltage data format');
+      }
+      
+      // Set up animation parameters
+      this.voltageAnimation.totalFrames = this.voltageData.metadata.frames;
+      this.voltageAnimation.currentFrame = 0;
+      
+      // Create mesh mapping
+      if (this.currentModel) {
+        this.mapVoltageDataToMeshes();
+      }
+      
+      console.log('Voltage data loaded successfully:');
+      console.log(`  - ${this.voltageData.sections.length} sections`);
+      console.log(`  - ${this.voltageAnimation.totalFrames} frames`);
+      console.log(`  - Duration: ${this.voltageData.metadata.duration_ms}ms`);
+      console.log(`  - Voltage range: ${this.voltageData.metadata.global_voltage_range.min} to ${this.voltageData.metadata.global_voltage_range.max} mV`);
+      
+      return this.voltageData;
+      
+    } catch (error) {
+      console.error('Error loading voltage data:', error);
+      throw error;
+    }
+  }
+  
+  mapVoltageDataToMeshes() {
+    if (!this.voltageData || !this.currentModel) return;
+    
+    console.log('Mapping voltage data to model meshes...');
+    this.voltageAnimation.meshMap.clear();
+    
+    // Traverse model to find meshes and match them to voltage sections
+    this.currentModel.traverse((child) => {
+      if (child.isMesh) {
+        // Try to match mesh name to section name
+        const meshName = child.name;
+        
+        // Find corresponding section data
+        const sectionData = this.voltageData.sections.find(section => {
+          // Try exact match first
+          if (section.name === meshName) return true;
+          
+          // Try partial matches (mesh names might be modified during export)
+          if (meshName.includes(section.name) || section.name.includes(meshName)) return true;
+          
+          // Try matching by index if names don't work
+          const meshIndex = parseInt(meshName.match(/\d+$/)?.[0]);
+          if (!isNaN(meshIndex) && meshIndex === section.id) return true;
+          
+          return false;
+        });
+        
+        if (sectionData) {
+          this.voltageAnimation.meshMap.set(child, sectionData);
+          console.log(`  - Mapped mesh "${meshName}" to section "${sectionData.name}"`);
+        } else {
+          console.warn(`  - No voltage data found for mesh "${meshName}"`);
+        }
+      }
+    });
+    
+    console.log(`Mapped ${this.voltageAnimation.meshMap.size} meshes to voltage data`);
+  }
+  
+  voltageToColor(voltage, minVoltage = -70, maxVoltage = 20) {
+    // Normalize voltage to 0-1 range
+    const normalized = (voltage - minVoltage) / (maxVoltage - minVoltage);
+    const clamped = Math.max(0, Math.min(1, normalized));
+    
+    // Create color based on voltage (mimicking BlenderSpike's plasma colormap)
+    // Low voltage (rest): dark blue/purple
+    // High voltage (action potential): bright yellow/white
+    
+    if (clamped < 0.25) {
+      // Dark blue to blue
+      return new THREE.Color(0.05 + clamped * 0.6, 0.05 + clamped * 0.2, 0.3 + clamped * 2.8);
+    } else if (clamped < 0.5) {
+      // Blue to purple/magenta
+      const t = (clamped - 0.25) * 4;
+      return new THREE.Color(0.2 + t * 0.6, 0.1, 0.8 + t * 0.2);
+    } else if (clamped < 0.75) {
+      // Purple to red/orange
+      const t = (clamped - 0.5) * 4;
+      return new THREE.Color(0.8 + t * 0.2, 0.1 + t * 0.7, 0.8 - t * 0.8);
+    } else {
+      // Red/orange to yellow/white
+      const t = (clamped - 0.75) * 4;
+      return new THREE.Color(1.0, 0.8 + t * 0.2, t * 0.8);
+    }
+  }
+  
+  updateVoltageFrame(frameIndex) {
+    if (!this.voltageData || !this.currentModel) return;
+    
+    const clampedFrame = Math.max(0, Math.min(frameIndex, this.voltageAnimation.totalFrames - 1));
+    this.voltageAnimation.currentFrame = clampedFrame;
+    
+    const { min: minVoltage, max: maxVoltage } = this.voltageData.metadata.global_voltage_range;
+    
+    // Update materials for each mapped mesh
+    this.voltageAnimation.meshMap.forEach((sectionData, mesh) => {
+      if (clampedFrame < sectionData.voltage_frames.length) {
+        const voltage = sectionData.voltage_frames[clampedFrame];
+        const color = this.voltageToColor(voltage, minVoltage, maxVoltage);
+        
+        // Update material color and emission
+        if (mesh.material) {
+          mesh.material.color.copy(color);
+          mesh.material.emissive.copy(color.clone().multiplyScalar(0.3));
+          mesh.material.emissiveIntensity = 0.2 + (voltage - minVoltage) / (maxVoltage - minVoltage) * 0.8;
+          mesh.material.needsUpdate = true;
+        }
+      }
+    });
+  }
+  
+  playVoltageAnimation(speed = 1.0) {
+    this.voltageAnimation.isPlaying = true;
+    this.voltageAnimation.speed = speed;
+    console.log('Started voltage animation');
+  }
+  
+  pauseVoltageAnimation() {
+    this.voltageAnimation.isPlaying = false;
+    console.log('Paused voltage animation');
+  }
+  
+  stopVoltageAnimation() {
+    this.voltageAnimation.isPlaying = false;
+    this.voltageAnimation.currentFrame = 0;
+    this.updateVoltageFrame(0);
+    console.log('Stopped voltage animation');
+  }
+  
   onWindowResize() {
     const width = this.container.clientWidth;
     const height = this.container.clientHeight;
@@ -298,6 +500,23 @@ class BlenderModelViewer {
     // Update animations
     if (this.mixer) {
       this.mixer.update(delta);
+    }
+    
+    // Update voltage animation
+    if (this.voltageAnimation.isPlaying && this.voltageData) {
+      // Calculate frame rate based on metadata
+      const framesPerSecond = this.voltageAnimation.totalFrames / (this.voltageData.metadata.duration_ms / 1000);
+      const frameIncrement = delta * framesPerSecond * this.voltageAnimation.speed;
+      
+      this.voltageAnimation.currentFrame += frameIncrement;
+      
+      // Loop animation
+      if (this.voltageAnimation.currentFrame >= this.voltageAnimation.totalFrames) {
+        this.voltageAnimation.currentFrame = 0;
+      }
+      
+      // Update voltage colors
+      this.updateVoltageFrame(Math.floor(this.voltageAnimation.currentFrame));
     }
     
     // Update controls

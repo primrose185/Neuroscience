@@ -19,6 +19,7 @@ Author: Generated with Claude Code
 import sys
 import os
 import argparse
+import json
 import numpy as np
 from neuron import h
 from neuron.units import um, mV, ms
@@ -253,6 +254,97 @@ def plot_results(recorder, t_vec, output_dir=None):
     
     return fig
 
+def export_voltage_data_json(recorder, t_vec, cell, output_file, frames=400):
+    """Export voltage data to JSON format for Three.js animation."""
+    print(f"\nExporting voltage data to JSON...")
+    
+    # Convert time vector to numpy array
+    time = np.array(t_vec)
+    
+    # Prepare data structure
+    animation_data = {
+        "metadata": {
+            "format_version": "1.0",
+            "description": "NEURON voltage animation data for Three.js",
+            "frames": frames,
+            "duration_ms": float(time[-1]) if len(time) > 0 else 50.0,
+            "time_step_ms": float(time[1] - time[0]) if len(time) > 1 else 0.025
+        },
+        "timepoints": time.tolist(),
+        "sections": []
+    }
+    
+    # Process each section's voltage data
+    for i, monitor in enumerate(recorder.monitors):
+        if len(monitor.Vectors) > 0:
+            # Get voltage data
+            voltage = np.array(monitor.Vectors[0])
+            
+            # Get section information
+            section = cell.all_sections[i] if i < len(cell.all_sections) else None
+            section_name = section.name() if section else f"section_{i}"
+            
+            # Determine section type
+            section_type = "dendrite"  # default
+            if section:
+                name_lower = section_name.lower()
+                if 'soma' in name_lower:
+                    section_type = "soma"
+                elif 'axon' in name_lower:
+                    section_type = "axon"
+                elif 'apic' in name_lower:
+                    section_type = "apical"
+            
+            # Resample voltage data to match requested frame count
+            if len(voltage) > frames:
+                # Downsample
+                indices = np.linspace(0, len(voltage)-1, frames, dtype=int)
+                voltage_frames = voltage[indices]
+            elif len(voltage) < frames:
+                # Upsample using interpolation
+                original_indices = np.arange(len(voltage))
+                new_indices = np.linspace(0, len(voltage)-1, frames)
+                voltage_frames = np.interp(new_indices, original_indices, voltage)
+            else:
+                voltage_frames = voltage
+            
+            # Create section data
+            section_data = {
+                "id": i,
+                "name": section_name,
+                "type": section_type,
+                "voltage_frames": voltage_frames.tolist(),
+                "voltage_range": {
+                    "min": float(np.min(voltage)),
+                    "max": float(np.max(voltage))
+                }
+            }
+            
+            animation_data["sections"].append(section_data)
+    
+    # Calculate global voltage range for consistent coloring
+    all_voltages = []
+    for section in animation_data["sections"]:
+        all_voltages.extend(section["voltage_frames"])
+    
+    if all_voltages:
+        animation_data["metadata"]["global_voltage_range"] = {
+            "min": float(np.min(all_voltages)),
+            "max": float(np.max(all_voltages))
+        }
+    
+    # Save to JSON file
+    json_file = output_file.replace('.pickle', '.json')
+    with open(json_file, 'w') as f:
+        json.dump(animation_data, f, indent=2)
+    
+    print(f"  - Saved voltage data to {json_file}")
+    print(f"  - {len(animation_data['sections'])} sections with voltage data")
+    print(f"  - {frames} frames per section")
+    print(f"  - Global voltage range: {animation_data['metadata']['global_voltage_range']['min']:.1f} to {animation_data['metadata']['global_voltage_range']['max']:.1f} mV")
+    
+    return json_file
+
 def main():
     """Main function to run the SWC to BlenderSpike conversion."""
     parser = argparse.ArgumentParser(description='Convert SWC morphology to BlenderSpike format using NEURON')
@@ -286,6 +378,10 @@ def main():
         recorder.save_pickle(args.output_file, FRAME_NUM=args.frames)
         print(f"  - Saved to {args.output_file}")
         print(f"  - {args.frames} animation frames")
+        
+        # Export voltage data to JSON for Three.js
+        json_file = export_voltage_data_json(recorder, t_vec, cell, args.output_file, frames=args.frames)
+        print(f"  - Also saved JSON animation data for Three.js")
         
         print("\\nConversion completed successfully!")
         print("\\nNext steps:")

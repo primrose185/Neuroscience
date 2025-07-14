@@ -95,21 +95,46 @@ python neuron_swc_to_blenderspike.py cheetah_pyramidal.swc cheetah_neuron.pickle
 
 ### Generated Files
 - `cheetah_pyramidal_neuron.pickle` - BlenderSpike-compatible morphology with voltage data
+- `cheetah_pyramidal_neuron.json` - **NEW:** Three.js-compatible voltage animation data
 - `simulation_results.png` - Visualization plots (if `--plot` used)
 
 ### File Structure
+
+#### Pickle File (BlenderSpike)
 The pickle file contains properly connected sections with:
 - **Morphology data**: X, Y, Z coordinates and diameters
 - **Voltage data**: Time-series voltage for each section
 - **Metadata**: Section types and IDs
 - **Animation frames**: 400 frames of voltage evolution
 
+#### JSON File (Three.js)
+The JSON file contains voltage animation data for web visualization:
+- **Metadata**: Frame count, duration, time step, global voltage range
+- **Timepoints**: Array of simulation time values
+- **Sections**: Per-section voltage data with:
+  - Section ID, name, and type (soma/axon/dendrite/apical)
+  - Voltage frames array (400 values per section)
+  - Individual voltage range for each section
+
+## Visualization Platforms
+
+### Blender (Traditional Workflow)
+1. **Load in Blender**: Load the pickle file and verify connectivity
+2. **Customize visualization**: Adjust colors, thickness, and animation timing
+3. **Create renders**: Export high-quality animations and images
+
+### Web Browser (New Three.js Integration)
+1. **Automatic loading**: JSON file automatically loaded alongside GLB model
+2. **Real-time animation**: Voltage propagation displayed in real-time
+3. **Interactive viewing**: Full 3D navigation and camera controls
+4. **Educational demos**: Perfect for web-based neuroscience education
+
 ## Next Steps
 
-1. **Test in Blender**: Load the new pickle file and verify connectivity
-2. **Customize visualization**: Adjust colors, thickness, and animation timing
-3. **Create educational content**: Document different viewing angles and scenarios
-4. **Extend to other morphologies**: Test with additional SWC files
+1. **Test both platforms**: Verify output in both Blender and web browser
+2. **Create educational content**: Document different viewing angles and scenarios
+3. **Extend to other morphologies**: Test with additional SWC files
+4. **Customize activity patterns**: Modify stimulation protocols for different demonstrations
 
 ## Troubleshooting
 
@@ -130,5 +155,49 @@ This converter enables creation of realistic neuron visualizations for:
 - **Dendritic integration** and signal processing
 - **Morphology-function relationships**
 - **Comparative neuron studies**
+- **Web-based interactive demonstrations** (via Three.js JSON export)
 
-The proper connectivity ensures that voltage propagation follows realistic pathways, making it ideal for educational demonstrations and research presentations.
+The proper connectivity ensures that voltage propagation follows realistic pathways, making it ideal for educational demonstrations and research presentations. The dual-format export (pickle + JSON) enables both traditional Blender workflows and modern web-based visualizations.
+
+## Technical Details
+
+### JSON Format Structure
+```json
+{
+  "metadata": {
+    "format_version": "1.0",
+    "frames": 400,
+    "duration_ms": 50.0,
+    "time_step_ms": 0.025,
+    "global_voltage_range": {"min": -70.0, "max": 40.0}
+  },
+  "timepoints": [0.0, 0.025, 0.05, ...],
+  "sections": [
+    {
+      "id": 0,
+      "name": "soma[0]", 
+      "type": "soma",
+      "voltage_frames": [-70.0, -69.8, -69.5, ...],
+      "voltage_range": {"min": -70.0, "max": 40.0}
+    }
+  ]
+}
+```
+
+### Customizing Activity Patterns
+To create different types of neural activity, modify the stimulation in `neuron_swc_to_blenderspike.py`:
+
+```python
+# Example: Multiple stimulation sites
+stim1 = h.IClamp(soma(0.5))
+stim1.delay, stim1.dur, stim1.amp = 5, 2, 0.5
+
+stim2 = h.IClamp(dendrite[10](0.5)) 
+stim2.delay, stim2.dur, stim2.amp = 15, 1, 0.3
+
+# Example: Synaptic input
+syn = h.ExpSyn(dendrite[5](0.7))
+syn.tau = 2.0
+netcon = h.NetCon(None, syn)
+netcon.weight[0] = 0.01
+```

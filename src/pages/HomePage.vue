@@ -64,12 +64,12 @@ const recentlyAdded = [
   }
 ]
 
-// How to use links
-const howToUseLinks = [
-  { title: 'Getting Started', path: '/how-to-use/getting-started', icon: '🚀' },
-  { title: 'Navigation Guide', path: '/how-to-use/navigation', icon: '🧭' },
-  { title: 'Search Tips', path: '/how-to-use/search', icon: '🔍' },
-  { title: 'Features Overview', path: '/how-to-use/features', icon: '✨' }
+// Platform guide links
+const platformGuideLinks = [
+  { title: 'Getting Started', path: '/platform-guide/getting-started', icon: '🚀' },
+  { title: 'Navigation Guide', path: '/platform-guide/navigation', icon: '🧭' },
+  { title: 'Search Tips', path: '/platform-guide/search', icon: '🔍' },
+  { title: 'Features Overview', path: '/platform-guide/features', icon: '✨' }
 ]
 
 // Popular tags
@@ -222,26 +222,26 @@ onMounted(() => {
       </div>
     </section>
 
-    <!-- How to Use Section -->
-    <section v-if="!showResults" class="how-to-use-section">
+    <!-- Platform Guide Section -->
+    <section v-if="!showResults" class="platform-guide-section">
       <div class="container">
         <div class="section-header">
-          <h2 class="section-title">How to Use</h2>
+          <h2 class="section-title">Platform Guide</h2>
           <p class="section-description">
             Learn how to navigate and make the most of this platform
           </p>
         </div>
         
-        <div class="how-to-use-grid">
+        <div class="platform-guide-grid">
           <a
-            v-for="link in howToUseLinks"
+            v-for="link in platformGuideLinks"
             :key="link.title"
             :href="link.path"
-            class="how-to-use-card"
+            class="platform-guide-card"
             @click.prevent="router.push(link.path)"
           >
-            <div class="how-to-use-icon">{{ link.icon }}</div>
-            <span class="how-to-use-title">{{ link.title }}</span>
+            <div class="platform-guide-icon">{{ link.icon }}</div>
+            <span class="platform-guide-title">{{ link.title }}</span>
           </a>
         </div>
       </div>
@@ -287,14 +287,14 @@ onMounted(() => {
 
 /* Reduced margin sections */
 .recently-added-section,
-.how-to-use-section,
+.platform-guide-section,
 .popular-tags-section {
   margin: 0 -12px;
 }
 
 @media (min-width: 768px) {
   .recently-added-section,
-  .how-to-use-section,
+  .platform-guide-section,
   .popular-tags-section {
     margin: 0 -24px;
   }
@@ -457,20 +457,20 @@ onMounted(() => {
   color: #2d3748;
 }
 
-/* How to Use Section */
-.how-to-use-section {
+/* Platform Guide Section */
+.platform-guide-section {
   padding: 80px 0;
   background: #f8fafc;
 }
 
-.how-to-use-grid {
+.platform-guide-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 20px;
   margin-top: 48px;
 }
 
-.how-to-use-card {
+.platform-guide-card {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -483,17 +483,17 @@ onMounted(() => {
   transition: all 0.3s ease;
 }
 
-.how-to-use-card:hover {
+.platform-guide-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   border-color: #93c5fd;
 }
 
-.how-to-use-icon {
+.platform-guide-icon {
   font-size: 1.5rem;
 }
 
-.how-to-use-title {
+.platform-guide-title {
   font-weight: 500;
 }
 
@@ -547,7 +547,7 @@ onMounted(() => {
     padding: 24px;
   }
   
-  .how-to-use-grid {
+  .platform-guide-grid {
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   }
 }

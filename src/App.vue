@@ -26,8 +26,18 @@ const menuItems: MenuItem[] = [
       },
       {
         id: 'section-1-2',
-        title: 'Advanced Concepts',
-        path: '/topic1#advanced-concepts'
+        title: 'Conditional Probability',
+        path: '/topic1#conditional-probability'
+      },
+      {
+        id: 'section-1-3',
+        title: 'Bayes\' Theorem',
+        path: '/topic1#bayes-theorem'
+      },
+      {
+        id: 'section-1-4',
+        title: 'Statistical Inference',
+        path: '/topic1#statistical-inference'
       }
     ]
   },
@@ -100,7 +110,6 @@ const handleMenuClick = (item: MenuItem) => {
 .main-content {
   flex: 1;
   margin-left: 20vw;
-  width: 80vw;
   transition: margin-left 0.3s;
 }
 @media (max-width: 768px) {

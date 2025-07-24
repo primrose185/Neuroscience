@@ -254,21 +254,44 @@ def plot_results(recorder, t_vec, output_dir=None):
     
     return fig
 
-def export_voltage_data_json(recorder, t_vec, cell, output_file, frames=400):
-    """Export voltage data to JSON format for Three.js animation."""
+def export_voltage_data_json(recorder, t_vec, cell, output_file, frames=400, material_config=None):
+    """Export voltage data to JSON format for Three.js animation with material configuration."""
     print(f"\nExporting voltage data to JSON...")
     
     # Convert time vector to numpy array
     time = np.array(t_vec)
     
+    # Default material configuration if not provided
+    if material_config is None:
+        material_config = {
+            'emission_strength': 2.0,
+            'colormap_steps': 10,
+            'cmap_start': 0.0,
+            'cmap_end': 1.0,
+            'colormap_name': 'plasma',
+            'min_voltage': -70,
+            'max_voltage': 20
+        }
+    
     # Prepare data structure
     animation_data = {
         "metadata": {
-            "format_version": "1.0",
-            "description": "NEURON voltage animation data for Three.js",
+            "format_version": "1.1",
+            "description": "NEURON voltage animation data for Three.js with material configuration",
             "frames": frames,
             "duration_ms": float(time[-1]) if len(time) > 0 else 50.0,
             "time_step_ms": float(time[1] - time[0]) if len(time) > 1 else 0.025
+        },
+        "material_config": {
+            "emission_strength": material_config['emission_strength'],
+            "colormap_steps": material_config['colormap_steps'],
+            "cmap_start": material_config['cmap_start'],
+            "cmap_end": material_config['cmap_end'],
+            "colormap_name": material_config['colormap_name'],
+            "voltage_range": {
+                "min": material_config['min_voltage'],
+                "max": material_config['max_voltage']
+            }
         },
         "timepoints": time.tolist(),
         "sections": []
@@ -342,6 +365,8 @@ def export_voltage_data_json(recorder, t_vec, cell, output_file, frames=400):
     print(f"  - {len(animation_data['sections'])} sections with voltage data")
     print(f"  - {frames} frames per section")
     print(f"  - Global voltage range: {animation_data['metadata']['global_voltage_range']['min']:.1f} to {animation_data['metadata']['global_voltage_range']['max']:.1f} mV")
+    print(f"  - Material config: {material_config['colormap_name']} colormap, emission_strength={material_config['emission_strength']}")
+    print(f"  - Colormap range: {material_config['cmap_start']:.1f} to {material_config['cmap_end']:.1f}, steps={material_config['colormap_steps']}")
     
     return json_file
 
@@ -354,6 +379,15 @@ def main():
     parser.add_argument('--tstop', type=float, default=50, help='Simulation time (ms)')
     parser.add_argument('--dt', type=float, default=0.025, help='Time step (ms)')
     parser.add_argument('--plot', action='store_true', help='Create result plots')
+    
+    # Material configuration arguments
+    parser.add_argument('--emission-strength', type=float, default=2.0, help='Material emission strength (default: 2.0)')
+    parser.add_argument('--colormap-steps', type=int, default=10, help='Number of colormap steps (default: 10)')
+    parser.add_argument('--cmap-start', type=float, default=0.0, help='Colormap start position 0-1 (default: 0.0)')
+    parser.add_argument('--cmap-end', type=float, default=1.0, help='Colormap end position 0-1 (default: 1.0)')
+    parser.add_argument('--colormap-name', type=str, default='plasma', help='Colormap name (default: plasma)')
+    parser.add_argument('--min-voltage', type=float, default=-70, help='Minimum voltage for material range (default: -70)')
+    parser.add_argument('--max-voltage', type=float, default=20, help='Maximum voltage for material range (default: 20)')
     
     args = parser.parse_args()
     
@@ -379,9 +413,18 @@ def main():
         print(f"  - Saved to {args.output_file}")
         print(f"  - {args.frames} animation frames")
         
-        # Export voltage data to JSON for Three.js
-        json_file = export_voltage_data_json(recorder, t_vec, cell, args.output_file, frames=args.frames)
-        print(f"  - Also saved JSON animation data for Three.js")
+        # Export voltage data to JSON for Three.js with material configuration
+        material_config = {
+            'emission_strength': args.emission_strength,
+            'colormap_steps': args.colormap_steps,
+            'cmap_start': args.cmap_start,
+            'cmap_end': args.cmap_end,
+            'colormap_name': args.colormap_name,
+            'min_voltage': args.min_voltage,
+            'max_voltage': args.max_voltage
+        }
+        json_file = export_voltage_data_json(recorder, t_vec, cell, args.output_file, frames=args.frames, material_config=material_config)
+        print(f"  - Also saved JSON animation data for Three.js with material configuration")
         
         print("\\nConversion completed successfully!")
         print("\\nNext steps:")

@@ -15,13 +15,13 @@ const router = createRouter({
       component: HomePage
     },
     {
-      path: '/how-to-use',
-      name: 'how-to-use',
+      path: '/platform-guide',
+      name: 'platform-guide',
       component: HowToUsePage
     },
     {
-      path: '/how-to-use/:section',
-      name: 'how-to-use-section',
+      path: '/platform-guide/:section',
+      name: 'platform-guide-section',
       component: HowToUsePage
     },
     {

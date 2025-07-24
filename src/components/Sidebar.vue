@@ -81,9 +81,9 @@ const handleSearchSelect = (result: SearchResult) => {
 // Utility navigation items
 const utilityItems: MenuItem[] = [
   {
-    id: 'how-to-use',
-    title: 'How to Use',
-    path: '/how-to-use'
+    id: 'platform-guide',
+    title: 'Platform Guide',
+    path: '/platform-guide'
   },
   {
     id: 'glossary',

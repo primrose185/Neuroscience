@@ -32,6 +32,7 @@ const handleMenuClick = (item: MenuItem) => {
     } else {
       expandedItems.value.add(item.id)
     }
+<<<<<<< HEAD
     // Also navigate to the main topic page
     if (item.path) {
       router.push(item.path)
@@ -54,6 +55,11 @@ const handleMenuClick = (item: MenuItem) => {
       // Regular navigation
       router.push(item.path)
     }
+=======
+  } else if (item.path) {
+    // Navigate for items with paths
+    router.push(item.path)
+>>>>>>> main
     emit('menuClick', item)
   }
 }
@@ -66,6 +72,7 @@ const handleHomeClick = () => {
   router.push('/')
 }
 
+<<<<<<< HEAD
 // Handle search results
 const handleSearch = (query: string, results: SearchResult[]) => {
   // Could emit search event to parent or handle locally
@@ -92,6 +99,8 @@ const utilityItems: MenuItem[] = [
   }
 ]
 
+=======
+>>>>>>> main
 const isExpanded = (itemId: string) => {
   return expandedItems.value.has(itemId)
 }
@@ -109,6 +118,7 @@ const isExpanded = (itemId: string) => {
       </button>
     </div>
     
+<<<<<<< HEAD
     <!-- Search Section -->
     <div class="sidebar-search">
       <SearchBar
@@ -120,6 +130,8 @@ const isExpanded = (itemId: string) => {
       />
     </div>
     
+=======
+>>>>>>> main
     <!-- Navigation Menu -->
     <div class="sidebar-content">
       <ul class="sidebar-menu">
@@ -171,6 +183,7 @@ const isExpanded = (itemId: string) => {
         </li>
       </ul>
     </div>
+<<<<<<< HEAD
     
     <!-- Utilities Section -->
     <div class="sidebar-utilities">
@@ -193,6 +206,8 @@ const isExpanded = (itemId: string) => {
       </ul>
     </div>
 
+=======
+>>>>>>> main
   </nav>
   
   <!-- Mobile Menu Toggle Button -->
@@ -213,6 +228,10 @@ const isExpanded = (itemId: string) => {
 
 <style scoped>
 .sidebar {
+<<<<<<< HEAD
+=======
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+>>>>>>> main
   width: 280px;
   height: 100vh;
   background-color: #ffffff;
@@ -232,12 +251,15 @@ const isExpanded = (itemId: string) => {
   flex-shrink: 0;
 }
 
+<<<<<<< HEAD
 .sidebar-search {
   padding: 16px 24px;
   border-bottom: 1px solid #f3f4f6;
   flex-shrink: 0;
 }
 
+=======
+>>>>>>> main
 .home-button {
   font-size: 18px;
   font-weight: 600;
@@ -339,6 +361,7 @@ const isExpanded = (itemId: string) => {
   border-left-color: #e5e7eb;
 }
 
+<<<<<<< HEAD
 /* Utilities Section */
 .sidebar-utilities {
   border-top: 1px solid #f3f4f6;
@@ -391,6 +414,8 @@ const isExpanded = (itemId: string) => {
   text-align: left;
 }
 
+=======
+>>>>>>> main
 .menu-toggle {
   position: fixed;
   top: 20px;

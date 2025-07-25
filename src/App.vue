@@ -17,7 +17,11 @@ const menuItems: MenuItem[] = [
   {
     id: 'topic1',
     title: 'Hartline et al.—Title, 19somethign',
+<<<<<<< HEAD
     path: '/topic1',
+=======
+    path: '/topic1/page1',
+>>>>>>> main
     children: [
       {
         id: 'section-1-1',
@@ -110,6 +114,10 @@ const handleMenuClick = (item: MenuItem) => {
 .main-content {
   flex: 1;
   margin-left: 20vw;
+<<<<<<< HEAD
+=======
+  width: 80vw;
+>>>>>>> main
   transition: margin-left 0.3s;
 }
 @media (max-width: 768px) {

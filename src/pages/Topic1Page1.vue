@@ -1,309 +1,179 @@
-// @ts-ignore
-// eslint-disable-next-line
-// TypeScript module declaration for STLLoader
-// If you want to avoid this warning globally, create a .d.ts file in your project
-// with: declare module 'three/examples/jsm/loaders/STLLoader';
-
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import * as THREE from 'three'
-import { STLLoader } from 'three/examples/jsm/loaders/STLLoader'
-
-// Reference to the split container
-const splitContainer = ref<HTMLElement | null>(null)
-const isResizing = ref(false)
-const leftPanel = ref<HTMLElement | null>(null)
-const visualizationContainer = ref<HTMLElement | null>(null)
-
-// Three.js variables
-let scene: THREE.Scene
-let camera: THREE.PerspectiveCamera
-let renderer: THREE.WebGLRenderer
-let cube: THREE.Mesh
-
-// Initial width of the left panel (in percentage)
-const leftPanelWidth = ref(50)
-
-const fileInput = ref<HTMLInputElement | null>(null)
-
-// Initialize Three.js scene
-const initThreeJs = () => {
-  if (!visualizationContainer.value) return
-
-  // Create scene
-  scene = new THREE.Scene()
-  scene.background = new THREE.Color(0xf3f4f6) // Match the gray background
-
-  // Create camera
-  camera = new THREE.PerspectiveCamera(
-    75,
-    visualizationContainer.value.clientWidth / visualizationContainer.value.clientHeight,
-    0.1,
-    1000
-  )
-  camera.position.z = 5
-
-  // Create renderer
-  renderer = new THREE.WebGLRenderer({ antialias: true })
-  renderer.setSize(
-    visualizationContainer.value.clientWidth,
-    visualizationContainer.value.clientHeight
-  )
-  visualizationContainer.value.innerHTML = ''
-  visualizationContainer.value.appendChild(renderer.domElement)
-
-  // Create a cube
-  const geometry = new THREE.BoxGeometry()
-  const material = new THREE.MeshPhongMaterial({ 
-    color: 0x93c5fd,  // Match the blue accent color
-    shininess: 60 
-  })
-  cube = new THREE.Mesh(geometry, material)
-  scene.add(cube)
-
-  // Add lights
-  const ambientLight = new THREE.AmbientLight(0xffffff, 0.5)
-  scene.add(ambientLight)
-  
-  const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5)
-  directionalLight.position.set(5, 5, 5)
-  scene.add(directionalLight)
-
-  // Start animation
-  animate()
-}
-
-// Animation loop
-const animate = () => {
-  requestAnimationFrame(animate)
-  
-  if (cube) {
-    cube.rotation.x += 0.01
-    cube.rotation.y += 0.01
+// Page metadata for search indexing
+const pageMetadata = {
+  id: 'topic1-page1',
+  title: 'Probability Theory Fundamentals',
+  content: 'Comprehensive introduction to probability theory covering basic concepts, conditional probability, Bayes theorem, and advanced statistical inference. This section provides a complete foundation in probability theory for mathematical and scientific applications.',
+  excerpt: 'Complete guide to probability theory from basic concepts to advanced applications.',
+  path: '/topic1/page1',
+  tags: ['probability', 'mathematics', 'statistics', 'bayes', 'conditional-probability', 'statistical-inference'],
+  category: 'Mathematics',
+  type: 'page' as const,
+  metadata: {
+    chapter: 'Chapter 1',
+    difficulty: 'beginner' as const,
+    estimatedReadTime: 12
   }
-  
-  renderer.render(scene, camera)
 }
 
-// Handle window resize
-const handleResize = () => {
-  if (!visualizationContainer.value || !camera || !renderer) return
-
-  const width = visualizationContainer.value.clientWidth
-  const height = visualizationContainer.value.clientHeight
-
-  camera.aspect = width / height
-  camera.updateProjectionMatrix()
-  renderer.setSize(width, height)
+// Export metadata for search indexing
+if (typeof window !== 'undefined') {
+  (window as any).__pageMetadata = pageMetadata
 }
-
-// Handle mouse events for resizing
-const startResize = (e: MouseEvent) => {
-  isResizing.value = true
-  document.addEventListener('mousemove', resize)
-  document.addEventListener('mouseup', stopResize)
-}
-
-const resize = (e: MouseEvent) => {
-  if (!isResizing.value || !splitContainer.value) return
-  
-  const containerRect = splitContainer.value.getBoundingClientRect()
-  const containerWidth = containerRect.width
-  const mouseX = e.clientX - containerRect.left
-  
-  // Calculate percentage (constrain between 30% and 70%)
-  let newWidth = (mouseX / containerWidth) * 100
-  newWidth = Math.min(Math.max(newWidth, 30), 70)
-  
-  leftPanelWidth.value = newWidth
-  handleResize()
-}
-
-const stopResize = () => {
-  isResizing.value = false
-  document.removeEventListener('mousemove', resize)
-  document.removeEventListener('mouseup', stopResize)
-}
-
-// Function to trigger file input
-const triggerFileInput = () => {
-  fileInput.value?.click()
-}
-
-// Function to handle file selection and load STL
-const handleFileChange = (event: Event) => {
-  const input = event.target as HTMLInputElement
-  if (!input.files || input.files.length === 0) return
-  const file = input.files[0]
-  const reader = new FileReader()
-  reader.onload = (_e) => {
-    const contents = _e.target?.result
-    if (!contents || !visualizationContainer.value) return
-    // Remove previous STL mesh if any
-    if (cube) {
-      scene.remove(cube)
-    }
-    const loader = new STLLoader()
-    const geometry = loader.parse(contents as ArrayBuffer)
-    const material = new THREE.MeshPhongMaterial({ color: 0x93c5fd, shininess: 60 })
-    const mesh = new THREE.Mesh(geometry, material)
-    scene.add(mesh)
-    cube = mesh
-    // Optionally, center camera or mesh here
-  }
-  reader.readAsArrayBuffer(file)
-}
-
-// Initialize Three.js when component is mounted
-onMounted(() => {
-  initThreeJs()
-  window.addEventListener('resize', handleResize)
-})
 </script>
 
 <template>
-  <div class="main-flex-root">
-    <div class="page-container" style="width: 100%">
-      <div class="max-w-7xl mx-auto px-8">
-        <div class="text-sm text-gray-600 mb-2">Chapter 1</div>
-        <h1 class="text-5xl font-bold mb-4">Basic Probability</h1>
-        <p class="text-xl text-gray-700">
-          This chapter is an introduction to the basic concepts of probability theory.
-        </p>
-      </div>
-      <!-- Split Panel Container -->
-      <div 
-        ref="splitContainer"
-        class="split-container max-w-7xl mx-auto px-8"
-      >
-        <!-- Left Panel - Content -->
-        <div 
-          ref="leftPanel"
-          class="left-panel"
-          :style="{ width: `${leftPanelWidth}%` }"
-        >
-          <section class="pr-8">
-            <h2 class="text-3xl font-bold mb-6">Chance Events</h2>
-            <p class="text-lg leading-relaxed mb-6">
-              Randomness is all around us. Probability theory is the mathematical framework that allows us 
-              to analyze chance events in a logically sound manner. The probability of an event is a number 
-              indicating how likely that event will occur. This number is always between 0 and 1, where 0 
-              indicates impossibility and 1 indicates certainty.
-            </p>
-
-            <!-- Mathematical Expression -->
-            <div class="bg-gray-50 rounded-lg p-6 mb-8">
-              <p class="text-lg mb-4">The mathematical expression for probability can be written as:</p>
-              <div class="flex justify-center">
-                <div class="bg-white px-8 py-4 rounded shadow-sm">
-                  P(E) = n(E) / n(S)
-                </div>
-              </div>
-            </div>
-          </section>
+  <div class="page-container p-8">
+    <div class="max-w-4xl mx-auto">
+      <div class="text-sm text-gray-600 mb-2">Chapter 1</div>
+      <h1 class="text-4xl font-bold mb-6">Probability Theory Fundamentals</h1>
+      <p class="text-xl text-gray-700 mb-8">
+        A comprehensive exploration of probability theory from basic concepts to advanced applications.
+      </p>
+      
+      <!-- Section: Basic Probability ---->
+      <section id="basic-probability" class="mb-16">
+        <div class="image-container bg-gray-300 rounded-lg h-64 w-full mb-8 shadow-lg flex items-center justify-center">
+          <span class="text-gray-500">Probability Distribution Visualization</span>
         </div>
+        <div class="content">
+          <h2 class="text-3xl font-bold mb-6">Basic Probability</h2>
+          <p class="text-lg leading-relaxed mb-6">
+            Randomness is all around us. Probability theory is the mathematical framework that allows us 
+            to analyze chance events in a logically sound manner. The probability of an event is a number 
+            indicating how likely that event will occur. This number is always between 0 and 1, where 0 
+            indicates impossibility and 1 indicates certainty.
+          </p>
+          
+          <div class="bg-blue-50 rounded-lg p-6 mb-6">
+            <h3 class="text-xl font-semibold mb-4">Fundamental Concepts</h3>
+            <ul class="list-disc list-inside space-y-2 text-base">
+              <li>Sample space: The set of all possible outcomes</li>
+              <li>Events: Subsets of the sample space</li>
+              <li>Probability measure: A function assigning probabilities to events</li>
+              <li>Probability axioms: The foundational rules of probability</li>
+            </ul>
+          </div>
 
-        <!-- Resizer -->
-        <div 
-          class="resizer"
-          @mousedown="startResize"
-        ></div>
-
-        <!-- Right Panel - Visualization -->
-        <div 
-          class="right-panel"
-          :style="{ width: `${100 - leftPanelWidth}%` }"
-        >
-          <div class="visualization-container">
-            <div class="bg-white rounded-lg shadow-lg p-8 h-full">
-              <h3 class="text-2xl font-semibold mb-4">Interactive 3D Visualization</h3>
-              <div 
-                ref="visualizationContainer"
-                class="visualization-content rounded-lg"
-              ></div>
-              <!-- STL Import Button -->
-              <div class="flex flex-col items-center mt-4">
-                <button @click="triggerFileInput" class="bg-blue-400 hover:bg-blue-500 text-white font-semibold py-2 px-4 rounded shadow mb-2">Import .stl file</button>
-                <input ref="fileInput" type="file" accept=".stl" class="hidden" @change="handleFileChange" />
+          <div class="bg-gray-50 rounded-lg p-6 mb-8">
+            <h3 class="text-xl font-semibold mb-4">Basic Probability Formula</h3>
+            <p class="text-lg mb-4">The mathematical expression for probability can be written as:</p>
+            <div class="flex justify-center">
+              <div class="bg-white px-8 py-4 rounded shadow-sm">
+                P(E) = n(E) / n(S)
               </div>
             </div>
           </div>
         </div>
-      </div>
+      </section>
+
+      <!-- Section: Conditional Probability ---->
+      <section id="conditional-probability" class="mb-16">
+        <div class="image-container bg-gray-300 rounded-lg h-64 w-full mb-8 shadow-lg flex items-center justify-center">
+          <span class="text-gray-500">Conditional Probability Tree Diagram</span>
+        </div>
+        <div class="content">
+          <h2 class="text-3xl font-bold mb-6">Conditional Probability</h2>
+          <p class="text-lg leading-relaxed mb-6">
+            Conditional probability measures the likelihood of an event occurring given that another event has already occurred.
+            This concept is fundamental to understanding statistical relationships and dependencies between events.
+          </p>
+          
+          <div class="bg-green-50 rounded-lg p-6 mb-6">
+            <h3 class="text-xl font-semibold mb-4">Key Properties</h3>
+            <ul class="list-disc list-inside space-y-2 text-base">
+              <li>Conditional probabilities must satisfy the same axioms as regular probabilities</li>
+              <li>The conditioning event must have positive probability</li>
+              <li>Independence can be defined through conditional probability</li>
+              <li>Chain rule allows decomposition of complex events</li>
+            </ul>
+          </div>
+
+          <div class="bg-gray-50 rounded-lg p-6 mb-6">
+            <h3 class="text-xl font-semibold mb-4">Conditional Probability Formula</h3>
+            <p class="text-base leading-relaxed mb-4">
+              The probability of event A given that event B has occurred:
+            </p>
+            <div class="flex justify-center">
+              <div class="bg-white px-6 py-3 rounded shadow-sm">
+                P(A|B) = P(A ∩ B) / P(B)
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section: Bayes' Theorem ---->
+      <section id="bayes-theorem" class="mb-16">
+        <div class="image-container bg-gray-300 rounded-lg h-64 w-full mb-8 shadow-lg flex items-center justify-center">
+          <span class="text-gray-500">Bayesian Inference Diagram</span>
+        </div>
+        <div class="content">
+          <h2 class="text-3xl font-bold mb-6">Bayes' Theorem</h2>
+          <p class="text-lg leading-relaxed mb-6">
+            Bayes' theorem describes the probability of an event based on prior knowledge of conditions 
+            that might be related to the event. It provides a mathematical framework for updating beliefs 
+            or hypotheses based on new evidence.
+          </p>
+          
+          <div class="bg-purple-50 rounded-lg p-6 mb-6">
+            <h3 class="text-xl font-semibold mb-4">Applications</h3>
+            <ul class="list-disc list-inside space-y-2 text-base">
+              <li>Medical diagnosis and screening tests</li>
+              <li>Machine learning and pattern recognition</li>
+              <li>Quality control and reliability analysis</li>
+              <li>Information theory and signal processing</li>
+            </ul>
+          </div>
+
+          <div class="bg-gray-50 rounded-lg p-6 mb-6">
+            <h3 class="text-xl font-semibold mb-4">Bayes' Theorem Formula</h3>
+            <p class="text-base leading-relaxed mb-4">
+              The posterior probability of hypothesis A given evidence B:
+            </p>
+            <div class="flex justify-center">
+              <div class="bg-white px-6 py-3 rounded shadow-sm">
+                P(A|B) = P(B|A) × P(A) / P(B)
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section: Statistical Inference ---->
+      <section id="statistical-inference" class="mb-16">
+        <div class="image-container bg-gray-300 rounded-lg h-64 w-full mb-8 shadow-lg flex items-center justify-center">
+          <span class="text-gray-500">Statistical Distribution Models</span>
+        </div>
+        <div class="content">
+          <h2 class="text-3xl font-bold mb-6">Statistical Inference</h2>
+          <p class="text-lg leading-relaxed mb-6">
+            Statistical inference uses probability theory to draw conclusions about populations based on sample data.
+            It provides methods for hypothesis testing, parameter estimation, and quantifying uncertainty in our conclusions.
+          </p>
+          
+          <div class="bg-orange-50 rounded-lg p-6 mb-6">
+            <h3 class="text-xl font-semibold mb-4">Inference Methods</h3>
+            <ul class="list-disc list-inside space-y-2 text-base">
+              <li>Point estimation: Finding single best estimates of parameters</li>
+              <li>Interval estimation: Constructing confidence intervals</li>
+              <li>Hypothesis testing: Making decisions based on sample evidence</li>
+              <li>Bayesian inference: Incorporating prior knowledge</li>
+            </ul>
+          </div>
+          
+          <p class="text-lg leading-relaxed">
+            These advanced concepts build upon basic probability theory to provide powerful tools for 
+            data analysis, scientific research, and decision making under uncertainty.
+          </p>
+        </div>
+      </section>
     </div>
   </div>
 </template>
 
 <style scoped>
-.main-flex-root {
-  display: flex;
-  min-height: 100vh;
-}
-
 .page-container {
-  min-height: 100vh;
-  background-color: #ffffff;
+  min-height: calc(100vh - 4rem);
 }
-
-@media (max-width: 768px) {
-  .page-container {
-    padding-left: 0;
-  }
-}
-
-.split-container {
-  display: flex;
-  align-items: stretch;
-  min-height: 600px;
-  position: relative;
-}
-
-.left-panel {
-  overflow-y: auto;
-  transition: width 0.1s ease;
-}
-
-.right-panel {
-  overflow-y: auto;
-  transition: width 0.1s ease;
-}
-
-.resizer {
-  width: 8px;
-  background-color: #e5e7eb;
-  cursor: col-resize;
-  transition: background-color 0.2s ease;
-  margin: 0 -4px;
-  z-index: 10;
-  position: relative;
-}
-
-.resizer:hover, .resizer:active {
-  background-color: #93c5fd;
-}
-
-.visualization-container {
-  height: 100%;
-  padding-left: 8px;
-}
-
-.visualization-content {
-  width: 100%;
-  height: 500px;
-  background-color: #f3f4f6;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* Prevent text selection while resizing */
-.split-container.resizing {
-  user-select: none;
-  cursor: col-resize;
-}
-
-/* Add smooth transitions */
-.transition-colors {
-  transition: all 0.3s ease;
-}
-</style> 
+</style>

@@ -121,7 +121,47 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html, body, #app {
+    font-family: 'Actor', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+  }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans;
+  }
+  
+  /* Ensure Actor font is applied to all text elements */
+  h1, h2, h3, h4, h5, h6, p, span, div, button, input, textarea, label, li, a {
+    font-family: inherit;
+  }
+
+  /* Full-width content well that uses entire main content area */
+  .content-well-full {
+    width: 100%;
+    padding: 0 1.5rem; /* Minimal padding for readability */
+  }
+  
+  /* Optional: Keep existing constrained content well for pages that need it */
+  .content-well-constrained {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+  }
+
+  /* Responsive padding adjustments for full-width content wells */
+  @media (max-width: 768px) {
+    .content-well-full {
+      padding: 0 1rem;
+    }
+    .content-well-constrained {
+      padding: 0 1rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .content-well-full {
+      padding: 0 0.75rem;
+    }
+    .content-well-constrained {
+      padding: 0 0.75rem;
+    }
   }
 } 

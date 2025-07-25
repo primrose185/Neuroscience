@@ -1,6 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import HomePage from '../pages/HomePage.vue'
+import HowToUsePage from '../pages/HowToUsePage.vue'
+import GlossaryPage from '../pages/GlossaryPage.vue'
 import Topic1Page1 from '../pages/Topic1Page1.vue'
-import Topic1Page2 from '../pages/Topic1Page2.vue'
 import Topic2Page1 from '../pages/Topic2Page1.vue'
 import Topic3Page from '../pages/Topic3Page.vue'
 
@@ -9,21 +11,32 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      redirect: '/topic1/page1'
+      name: 'home',
+      component: HomePage
     },
     {
-      path: '/topic1/page1',
-      name: 'topic1-page1',
+      path: '/platform-guide',
+      name: 'platform-guide',
+      component: HowToUsePage
+    },
+    {
+      path: '/platform-guide/:section',
+      name: 'platform-guide-section',
+      component: HowToUsePage
+    },
+    {
+      path: '/glossary',
+      name: 'glossary',
+      component: GlossaryPage
+    },
+    {
+      path: '/topic1',
+      name: 'topic1',
       component: Topic1Page1
     },
     {
-      path: '/topic1/page2',
-      name: 'topic1-page2',
-      component: Topic1Page2
-    },
-    {
-      path: '/topic2/page1',
-      name: 'topic2-page1',
+      path: '/topic2',
+      name: 'topic2',
       component: Topic2Page1
     },
     {

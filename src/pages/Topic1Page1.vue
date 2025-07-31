@@ -120,9 +120,23 @@ watch(activeGlobalCard, async (newCardIndex) => {
     <div class="max-w-4xl">
       <div class="text-sm text-gray-600 mb-2"><br></div>
       <h1 class="text-4xl mb-6"style="font-size: 40px;">Visual receptors and retinal interaction</h1>
-      <p class="text-xl text-gray-700 mb-8"style="font-size: 18px">
+      <p class="text-xl text-gray-700 mb-6"style="font-size: 18px">
         H. K. Hartline, Nobel Lecture, 1967
       </p>
+      
+      <!-- Tags Section -->
+      <div class="tags-section mb-8">
+        <div class="flex flex-wrap items-center gap-3">
+          <span class="text-xl text-gray-700" style="font-size: 18px">Tags: </span>
+          <span
+            v-for="tag in pageMetadata.tags"
+            :key="tag"
+            class="tag-chip"
+          >
+            #{{ tag }}
+          </span>
+        </div>
+      </div>
       
       <!-- Section: Introducing Limulus polyphemus ---->
       <section id="introducing-limulus-polyphemus" class="mb-16">
@@ -318,5 +332,27 @@ watch(activeGlobalCard, async (newCardIndex) => {
 .reading-card p {
   margin: 0;
   color: inherit;
+}
+
+/* Tags Section Styles */
+.tags-section {
+  padding: 0;
+}
+
+.tag-chip {
+  display: inline-block;
+  padding: 6px 12px;
+  background-color: #f3f4f6;
+  color: #6b7280;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  margin-right: 8px;
+  transition: all 0.2s ease;
+}
+
+.tag-chip:hover {
+  background-color: #e5e7eb;
+  color: #374151;
 }
 </style>

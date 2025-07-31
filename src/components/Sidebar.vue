@@ -32,9 +32,28 @@ const handleMenuClick = (item: MenuItem) => {
     } else {
       expandedItems.value.add(item.id)
     }
+    // Also navigate to the main topic page
+    if (item.path) {
+      router.push(item.path)
+      emit('menuClick', item)
+    }
   } else if (item.path) {
-    // Navigate for items with paths
-    router.push(item.path)
+    // Check if this is a section link (contains #)
+    if (item.path.includes('#')) {
+      const [pagePath, sectionId] = item.path.split('#')
+      // Navigate to page first, then scroll to section
+      router.push(pagePath).then(() => {
+        setTimeout(() => {
+          const element = document.getElementById(sectionId)
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth' })
+          }
+        }, 100)
+      })
+    } else {
+      // Regular navigation
+      router.push(item.path)
+    }
     emit('menuClick', item)
   }
 }
@@ -46,6 +65,32 @@ const handleToggle = () => {
 const handleHomeClick = () => {
   router.push('/')
 }
+
+// Handle search results
+const handleSearch = (query: string, results: SearchResult[]) => {
+  // Could emit search event to parent or handle locally
+  console.log('Search performed:', query, results)
+}
+
+// Handle search result selection
+const handleSearchSelect = (result: SearchResult) => {
+  router.push(result.item.path)
+  emit('menuClick', { id: result.item.id, title: result.item.title, path: result.item.path })
+}
+
+// Utility navigation items
+const utilityItems: MenuItem[] = [
+  {
+    id: 'platform-guide',
+    title: 'Platform Guide',
+    path: '/platform-guide'
+  },
+  {
+    id: 'glossary',
+    title: 'Glossary',
+    path: '/glossary'
+  }
+]
 
 const isExpanded = (itemId: string) => {
   return expandedItems.value.has(itemId)
@@ -62,6 +107,17 @@ const isExpanded = (itemId: string) => {
       >
         Home
       </button>
+    </div>
+    
+    <!-- Search Section -->
+    <div class="sidebar-search">
+      <SearchBar
+        placeholder="Search topics..."
+        :compact="true"
+        :max-results="5"
+        @search="handleSearch"
+        @select="handleSearchSelect"
+      />
     </div>
     
     <!-- Navigation Menu -->
@@ -115,6 +171,28 @@ const isExpanded = (itemId: string) => {
         </li>
       </ul>
     </div>
+    
+    <!-- Utilities Section -->
+    <div class="sidebar-utilities">
+      <div class="utilities-header">
+        <span class="utilities-title">Utilities</span>
+      </div>
+      <ul class="utilities-menu">
+        <li
+          v-for="item in utilityItems"
+          :key="item.id"
+          class="utility-item"
+        >
+          <div
+            class="utility-item-content"
+            @click="handleMenuClick(item)"
+          >
+            <span class="utility-item-title">{{ item.title }}</span>
+          </div>
+        </li>
+      </ul>
+    </div>
+
   </nav>
   
   <!-- Mobile Menu Toggle Button -->
@@ -315,5 +393,63 @@ const isExpanded = (itemId: string) => {
 
 .sidebar-content::-webkit-scrollbar-thumb:hover {
   background-color: #9ca3af;
+}
+
+.sidebar-search {
+  padding: 16px 24px;
+  border-bottom: 1px solid #f3f4f6;
+  flex-shrink: 0;
+}
+
+/* Utilities Section */
+.sidebar-utilities {
+  border-top: 1px solid #f3f4f6;
+  margin-top: auto;
+  flex-shrink: 0;
+}
+
+.utilities-header {
+  padding: 12px 24px 6px 24px;
+}
+
+.utilities-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.utilities-menu {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  padding-bottom: 12px;
+}
+
+.utility-item {
+  margin: 0;
+}
+
+.utility-item-content {
+  display: flex;
+  align-items: center;
+  padding: 6px 24px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  color: #6b7280;
+  font-size: 13px;
+  font-weight: 500;
+  text-align: left;
+}
+
+.utility-item-content:hover {
+  background-color: #f9fafb;
+  color: #374151;
+}
+
+.utility-item-title {
+  flex: 1;
+  text-align: left;
 }
 </style>

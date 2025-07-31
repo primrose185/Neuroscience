@@ -25,7 +25,7 @@ if (typeof window !== 'undefined') {
 <template>
   <div class="page-container p-8">
     <div class="max-w-4xl mx-auto">
-      <div class="content">
+      <div class="content text-left">
         <h1 class="text-4xl font-bold mb-6">Topic 3</h1>
         <p class="text-lg leading-relaxed">
           This is a section without an image. The content starts at the top of the section.

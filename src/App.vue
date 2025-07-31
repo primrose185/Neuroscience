@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, provide } from 'vue'
 import { useRouter } from 'vue-router'
 import Sidebar from './components/Sidebar.vue'
+import type Generic3DModelViewer from './utilities/Generic3DModelViewer.js'
 
 interface MenuItem {
   id: string
@@ -13,31 +14,41 @@ interface MenuItem {
 const router = useRouter()
 const sidebarOpen = ref(false)
 
+// Shared 3D model viewer instance
+const sharedModelViewer = ref<Generic3DModelViewer | null>(null)
+const setSharedModelViewer = (viewer: Generic3DModelViewer | null) => {
+  sharedModelViewer.value = viewer
+}
+
+// Provide shared model viewer to all child components
+provide('sharedModelViewer', sharedModelViewer)
+provide('setSharedModelViewer', setSharedModelViewer)
+
 const menuItems: MenuItem[] = [
   {
     id: 'topic1',
-    title: 'Hartline et al.—Title, 19somethign',
-    path: '/topic1/page1',
+    title: 'Hartline—Nobel Lecture, 1967',
+    path: '/topic1',
     children: [
       {
         id: 'section-1-1',
-        title: 'Basic Probability',
-        path: '/topic1#basic-probability'
+        title: 'Introducing Limulus polyphemus',
+        path: '/topic1#introducing-limulus-polyphemus'
       },
       {
         id: 'section-1-2',
-        title: 'Conditional Probability',
-        path: '/topic1#conditional-probability'
+        title: 'Experiments with single ommatidia',
+        path: '/topic1#experiments-with-single-ommatidia'
       },
       {
         id: 'section-1-3',
-        title: 'Bayes\' Theorem',
-        path: '/topic1#bayes-theorem'
+        title: 'Inhibitory interactions in the retina',
+        path: '/topic1#inhibitory-interactions-in-the-retina'
       },
       {
         id: 'section-1-4',
-        title: 'Statistical Inference',
-        path: '/topic1#statistical-inference'
+        title: 'Mathematical models of inhibition',
+        path: '/topic1#mathematical-models-of-mutual-inhibition'
       }
     ]
   },

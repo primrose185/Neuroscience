@@ -50,12 +50,13 @@ const scrollToCenter = (cardRef: HTMLElement) => {
 
 
 onMounted(async () => {
+  await nextTick() // Ensure DOM is fully rendered
   
   // Setup Intersection Observer for card activation
   const observerOptions = {
     root: null,
     rootMargin: '-20% 0px -20% 0px',
-    threshold: 0.6
+    threshold: 0.3
   }
   
   const observer = new IntersectionObserver((entries) => {
@@ -179,13 +180,9 @@ watch(activeGlobalCard, async (newCardIndex) => {
               >
                 <p class="text-lg leading-relaxed" style="font-size: 18px;">
                   To collect information about vision, Hartline measured the rate of activity in a singular neuron. The optic nerve in Limulus polyphemus is long, and Harline isolated a single axon. He then put electrodes into the axon to measure the rate of action potentials. The goal was to measure the level of activity in the axon in an oscillograph of action potentials.
-                </p>
-                <br>
-                <p class="text-lg leading-relaxed" style="font-size: 18px;">
+                  <br/><br/>
                   The oscillograph for one nerve fiber is set up by drilling a hole into the carapace of the horseshoe crab and placing a recording chamber inside that hole. The location of the optic nerve can be estimated through the locations of the lateral and median eyes, as the optic nerve runs in between them.
-                </p>
-                <br>
-                <p class="text-lg leading-relaxed" style="font-size: 18px;">
+                  <br/><br/>
                   After the hole is drilled approximately where the optic nerve will be, the optic nerve is drawing into the recording chamber. Excess connective tissue is removed around the nerve, and the sheath around the nerve is also removed. A single fiber is then isolated and cut. The electrode of the oscillograph is then connected to the cut end of the fiber, which allows it to record the electrical signals that are running through the fiber.
                 </p>
               </div>
@@ -199,7 +196,7 @@ watch(activeGlobalCard, async (newCardIndex) => {
                 <p class="text-lg leading-relaxed" style="font-size: 18px;">
                   This type of setup was used for the majority of the experiments that Hartline did at this point. Conveniently, the visual field of a single neuron can be isolated by isolating an ommatidium.
                 </p>
-                <br>
+
                 <p class="text-lg leading-relaxed" style="font-size: 18px;">
                   We can learn a lot about visual processing from the behavior of a single neuron. The simplest situation is when a single light is repeatedly shone on a single ommatidium. To shine a light on a single ommatidium, a fiber optic light pipe is used to focus the light on a precise place. By doing so, when the light is shone on the ommatidium, the corresponding fiber in the optic nerve starts sending action potentials, which is what is measured by the oscillograph.
                 </p>
@@ -318,10 +315,8 @@ watch(activeGlobalCard, async (newCardIndex) => {
   transform: translateX(0);
 }
 
-/* Ensure smooth transitions for all card properties */
 .reading-card p {
   margin: 0;
-  transition: color 0.3s ease;
+  color: inherit;
 }
-
 </style>

@@ -37,16 +37,6 @@ const expCard1Ref = ref<HTMLElement | null>(null)
 const expCard2Ref = ref<HTMLElement | null>(null)
 
 
-// Function to center the active card in viewport
-const scrollToCenter = (cardRef: HTMLElement) => {
-  if (cardRef) {
-    cardRef.scrollIntoView({
-      behavior: 'smooth',
-      block: 'center',
-      inline: 'nearest'
-    })
-  }
-}
 
 
 onMounted(async () => {
@@ -90,28 +80,13 @@ onMounted(async () => {
 })
 
 
-// Helper function to get card reference by global index
-const getCardRefByIndex = (index: number): HTMLElement | null => {
-  switch (index) {
-    case 0: return card1Ref.value       // Limulus card 1
-    case 1: return card2Ref.value       // Limulus card 2
-    case 2: return expCard1Ref.value    // Experiments card 1
-    case 3: return expCard2Ref.value    // Experiments card 2
-    default: return null
-  }
-}
 
-// Unified watcher for active card changes - centers active card in viewport
+// Unified watcher for active card changes - placeholder for future functionality
 watch(activeGlobalCard, async (newCardIndex) => {
   await nextTick() // Wait for DOM updates
   
-  // Add small delay to let card activation animation complete
-  setTimeout(() => {
-    const cardRef = getCardRefByIndex(newCardIndex)
-    if (cardRef) {
-      scrollToCenter(cardRef)
-    }
-  }, 100) // 100ms delay for smooth experience
+  // Future functionality can be added here based on active card changes
+  // For example: updating 3D model states, analytics tracking, etc.
 })
 </script>
 
@@ -137,6 +112,10 @@ watch(activeGlobalCard, async (newCardIndex) => {
           </span>
         </div>
       </div>
+
+      <p class="text-xl text-gray-700 mb-6"style="font-size: 18px">
+        Abstract: The Nobel Prize in Physiology or Medicine in 1967 was awarded jointly to Haldan Keffer Hartline, Ragnar Granit, and George Wald for their discoveries concerning visual processes. In his Nobel Lecture, Hartline explains his work on the concept of lateral inhibition, which is a defining characteristic of retinal interactions and demonstrates the importance of contrast in visual processing.
+      </p>
       
       <!-- Section: Introducing Limulus polyphemus ---->
       <section id="introducing-limulus-polyphemus" class="mb-16">

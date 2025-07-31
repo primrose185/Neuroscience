@@ -206,6 +206,69 @@ class Generic3DModelViewer {
       throw error;
     }
   }
+
+  // Load model from already loaded GLTF data (for sharing models across viewers)
+  async loadFromGLTFData(gltfData, options = {}) {
+    try {
+      // Remove previous model if exists  
+      if (this.currentModel) {
+        this.scene.remove(this.currentModel);
+      }
+      
+      // Stop previous animations
+      if (this.mixer) {
+        this.mixer.stopAllAction();
+      }
+
+      // Clone the GLTF scene to avoid sharing Three.js objects between renderers
+      const model = gltfData.scene.clone();
+      this.currentModel = model;
+      
+      // Apply transform options
+      if (options.scale) {
+        model.scale.setScalar(options.scale);
+      }
+      
+      if (options.position) {
+        model.position.set(options.position.x, options.position.y, options.position.z);
+      }
+      
+      if (options.rotation) {
+        model.rotation.set(options.rotation.x, options.rotation.y, options.rotation.z);
+      }
+      
+      // Configure model materials and shadows with texture preservation
+      this.configureModelMaterials(model, options);
+      
+      // Setup animations (clone animations for this viewer)
+      if (gltfData.animations && gltfData.animations.length > 0) {
+        this.mixer = new THREE.AnimationMixer(model);
+        this.animations = gltfData.animations; // Share animation data (not objects)
+        
+        // Auto-play first animation if specified
+        if (options.autoPlay !== false) {
+          this.playAnimation(0);
+        }
+      }
+      
+      // Add to scene
+      this.scene.add(model);
+      
+      // Auto-fit camera if specified
+      if (options.fitCamera !== false) {
+        this.fitCameraToModel(model);
+      }
+      
+      console.log('Model loaded from shared GLTF data successfully');
+      console.log('Available animations:', this.getAnimationNames());
+      
+      return { model, animations: this.animations };
+      
+    } catch (error) {
+      console.error('Error loading model from GLTF data:', error);
+      throw error;
+    }
+  }
   
   configureModelMaterials(model, options) {
     model.traverse((child) => {

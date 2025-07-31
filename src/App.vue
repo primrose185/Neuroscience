@@ -14,15 +14,15 @@ interface MenuItem {
 const router = useRouter()
 const sidebarOpen = ref(false)
 
-// Shared 3D model viewer instance
-const sharedModelViewer = ref<Generic3DModelViewer | null>(null)
-const setSharedModelViewer = (viewer: Generic3DModelViewer | null) => {
-  sharedModelViewer.value = viewer
+// Shared 3D model data (GLTF data, not viewer instance)
+const sharedModelData = ref<any>(null)
+const setSharedModelData = (data: any) => {
+  sharedModelData.value = data
 }
 
-// Provide shared model viewer to all child components
-provide('sharedModelViewer', sharedModelViewer)
-provide('setSharedModelViewer', setSharedModelViewer)
+// Provide shared model data to all child components
+provide('sharedModelData', sharedModelData)
+provide('setSharedModelData', setSharedModelData)
 
 const menuItems: MenuItem[] = [
   {

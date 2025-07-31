@@ -13,11 +13,11 @@ const props = withDefaults(defineProps<Props>(), {
   viewerOptions: () => ({})
 })
 
-// Shared model viewer instance - using provide/inject pattern
-const sharedModelViewer = inject('sharedModelViewer', ref<Generic3DModelViewer | null>(null))
-const setSharedModelViewer = inject('setSharedModelViewer', (viewer: Generic3DModelViewer | null) => {})
+// Shared model data - using provide/inject pattern for model sharing, not viewer sharing
+const sharedModelData = inject('sharedModelData', ref<any>(null))
+const setSharedModelData = inject('setSharedModelData', (data: any) => {})
 
-// Local viewer instance for this container
+// Local viewer instance for this container (each container gets its own viewer)
 let localViewer: Generic3DModelViewer | null = null
 let modalModelViewer: Generic3DModelViewer | null = null
 
@@ -93,50 +93,52 @@ onMounted(async () => {
 
     const mergedOptions = { ...defaultOptions, ...props.viewerOptions }
 
-    // Check if we already have a shared model viewer
-    if (!sharedModelViewer.value) {
-      // Create the first/shared instance
-      localViewer = new Generic3DModelViewer(props.containerId, mergedOptions)
-      
-      // Apply gradient background
-      const gradientTexture = createDepthGradientTexture('#ecebf5', '#6c6596')
-      localViewer.scene.background = gradientTexture
-      
-      // Load the model
-      await localViewer.loadModel(props.modelPath, {
+    // Create a new viewer instance for this container
+    localViewer = new Generic3DModelViewer(props.containerId, mergedOptions)
+    
+    // Apply gradient background
+    const gradientTexture = createDepthGradientTexture('#ecebf5', '#6c6596')
+    localViewer.scene.background = gradientTexture
+
+    // Check if we already have shared model data
+    if (!sharedModelData.value) {
+      // Load the model for the first time and store the GLTF data for sharing
+      const result = await localViewer.loadModel(props.modelPath, {
         scale: 1.0,
         position: { x: 0, y: 0, z: 0 },
         autoPlay: false,
         fitCamera: true
       })
       
-      // Set this as the shared viewer
-      setSharedModelViewer(localViewer)
-      sharedModelViewer.value = localViewer
+      // Store the GLTF data for sharing (not the Three.js objects)
+      // We need to access the original GLTF data from the loader
+      console.log('Loading model for sharing:', props.modelPath)
       
-      console.log('Created shared 3D model viewer for container:', props.containerId)
+      // Load fresh GLTF data for sharing
+      const { GLTFLoader } = await import('three/examples/jsm/loaders/GLTFLoader.js')
+      const { DRACOLoader } = await import('three/examples/jsm/loaders/DRACOLoader.js')
+      
+      const loader = new GLTFLoader()
+      const dracoLoader = new DRACOLoader()
+      dracoLoader.setDecoderPath('/draco/')
+      loader.setDRACOLoader(dracoLoader)
+      
+      const gltfData = await new Promise((resolve, reject) => {
+        loader.load(props.modelPath, resolve, undefined, reject)
+      })
+      
+      setSharedModelData(gltfData)
+      console.log('Created and stored shared model data for:', props.containerId)
     } else {
-      // Reuse the existing shared model in a new container
-      const sharedScene = sharedModelViewer.value.scene
-      const sharedCamera = sharedModelViewer.value.camera
+      // Use the shared GLTF data to load the model
+      await localViewer.loadFromGLTFData(sharedModelData.value, {
+        scale: 1.0,
+        position: { x: 0, y: 0, z: 0 },
+        autoPlay: false,
+        fitCamera: true
+      })
       
-      // Create a new viewer instance for this container but share the scene
-      localViewer = new Generic3DModelViewer(props.containerId, mergedOptions)
-      
-      // Replace the scene and camera with shared instances
-      localViewer.scene = sharedScene
-      localViewer.camera = sharedCamera
-      
-      // Apply gradient background to shared scene if not already applied
-      if (!sharedScene.background || sharedScene.background.constructor !== THREE.CanvasTexture) {
-        const gradientTexture = createDepthGradientTexture('#ecebf5', '#6c6596')
-        sharedScene.background = gradientTexture
-      }
-      
-      // Update the renderer to use the shared scene and camera
-      localViewer.renderer.render(sharedScene, sharedCamera)
-      
-      console.log('Reusing shared 3D model for container:', props.containerId)
+      console.log('Loaded model from shared GLTF data for:', props.containerId)
     }
   } catch (error) {
     console.error('Failed to load 3D model:', error)
@@ -173,14 +175,23 @@ const initializeModalViewer = async () => {
     const modalGradientTexture = createDepthGradientTexture('#e4e1f2', '#7b6add')
     modalModelViewer.scene.background = modalGradientTexture
     
-    // Load model in modal
+    // Load model in modal using shared data if available
     try {
-      await modalModelViewer.loadModel(props.modelPath, {
-        scale: 1.0,
-        position: { x: 0, y: 0, z: 0 },
-        autoPlay: false,
-        fitCamera: true
-      })
+      if (sharedModelData.value) {
+        await modalModelViewer.loadFromGLTFData(sharedModelData.value, {
+          scale: 1.0,
+          position: { x: 0, y: 0, z: 0 },
+          autoPlay: false,
+          fitCamera: true
+        })
+      } else {
+        await modalModelViewer.loadModel(props.modelPath, {
+          scale: 1.0,
+          position: { x: 0, y: 0, z: 0 },
+          autoPlay: false,
+          fitCamera: true
+        })
+      }
       
       console.log('Modal 3D model loaded successfully')
     } catch (error) {
@@ -192,7 +203,7 @@ const initializeModalViewer = async () => {
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', handleKeydown)
   
-  if (localViewer && localViewer !== sharedModelViewer.value) {
+  if (localViewer) {
     localViewer.dispose()
   }
   
@@ -262,10 +273,6 @@ defineExpose({
   transition: all 0.3s ease;
 }
 
-/* Add shadow to 3D container when parent column is sticky */
-.visualization-column.sticky .model-3d-container {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
 
 .model-3d-container canvas {
   width: 100% !important;

@@ -131,7 +131,7 @@ watch(activeGlobalCard, async (newCardIndex) => {
           <TwoPaneVisualizationSection
             section-id="limulus-intro"
             model-path="/models/horseshoe_crab_basic.glb"
-            :enable-sticky="true"
+            :show-model="true"
           >
             <template #content>
               <!-- Card 1: Model organism selection -->
@@ -168,7 +168,7 @@ watch(activeGlobalCard, async (newCardIndex) => {
           <TwoPaneVisualizationSection
             section-id="experiments"
             model-path="/models/horseshoe_crab_basic.glb"
-            :enable-sticky="true"
+            :show-model="true"
           >
             <template #content>
               <!-- Experiments Card 1: Setup and recording procedure -->
@@ -213,31 +213,39 @@ watch(activeGlobalCard, async (newCardIndex) => {
       <section id="inhibitory-interactions-in-the-retina" class="mb-16">
         <div class="content text-left">
           <h2 class="text-3xl mb-6">Inhibitory interactions in the retina</h2>
-          <p class="text-lg leading-relaxed mb-6" style="font-size: 18px;">
-            Bayes' theorem describes the probability of an event based on prior knowledge of conditions 
-            that might be related to the event. It provides a mathematical framework for updating beliefs 
-            or hypotheses based on new evidence.
-          </p>
           
-          <div class="bg-purple-50 rounded-lg p-6 mb-6">
-            <h3 class="text-xl mb-4">Applications</h3>
-            <ul class="list-disc list-inside space-y-2 text-lg" style="font-size: 18px;">
-              <li>Medical diagnosis and screening tests</li>
-              <li>Machine learning and pattern recognition</li>
-              <li>Quality control and reliability analysis</li>
-              <li>Information theory and signal processing</li>
-            </ul>
-          </div>
+          <TwoPaneVisualizationSection
+            section-id="inhibitory-interactions"
+            :show-model="false"
+          >
+            <template #content>
+              <p class="text-lg leading-relaxed mb-6" style="font-size: 18px;">
+                Bayes' theorem describes the probability of an event based on prior knowledge of conditions 
+                that might be related to the event. It provides a mathematical framework for updating beliefs 
+                or hypotheses based on new evidence.
+              </p>
+              
+              <div class="bg-purple-50 rounded-lg p-6 mb-6">
+                <h3 class="text-xl mb-4">Applications</h3>
+                <ul class="list-disc list-inside space-y-2 text-lg" style="font-size: 18px;">
+                  <li>Medical diagnosis and screening tests</li>
+                  <li>Machine learning and pattern recognition</li>
+                  <li>Quality control and reliability analysis</li>
+                  <li>Information theory and signal processing</li>
+                </ul>
+              </div>
 
-          <div class="bg-gray-50 rounded-lg p-6 mb-6">
-            <h3 class="text-xl mb-4">Bayes' Theorem Formula</h3>
-            <p class="text-lg leading-relaxed mb-4" style="font-size: 18px;">
-              The posterior probability of hypothesis A given evidence B:
-            </p>
-            <div class="bg-white px-6 py-3 rounded shadow-sm">
-              P(A|B) = P(B|A) × P(A) / P(B)
-            </div>
-          </div>
+              <div class="bg-gray-50 rounded-lg p-6 mb-6">
+                <h3 class="text-xl mb-4">Bayes' Theorem Formula</h3>
+                <p class="text-lg leading-relaxed mb-4" style="font-size: 18px;">
+                  The posterior probability of hypothesis A given evidence B:
+                </p>
+                <div class="bg-white px-6 py-3 rounded shadow-sm">
+                  P(A|B) = P(B|A) × P(A) / P(B)
+                </div>
+              </div>
+            </template>
+          </TwoPaneVisualizationSection>
         </div>
       </section>
 
@@ -249,7 +257,7 @@ watch(activeGlobalCard, async (newCardIndex) => {
           <TwoPaneVisualizationSection
             section-id="mathematical-models"
             model-path="/models/horseshoe_crab_basic.glb"
-            :enable-sticky="true"
+            :show-model="false"
           >
             <template #content>
               <p class="text-lg leading-relaxed mb-6" style="font-size: 18px;">

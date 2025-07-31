@@ -41,7 +41,7 @@ if (typeof window !== 'undefined') {
           <TwoPaneVisualizationSection
             section-id="neuroscience-fundamentals"
             model-path="/models/horseshoe_crab_basic.glb"
-            :enable-sticky="true"
+            :show-model="true"
           >
             <template #content>
               <p class="text-lg leading-relaxed mb-6">
@@ -77,7 +77,7 @@ if (typeof window !== 'undefined') {
           <TwoPaneVisualizationSection
             section-id="neural-circuits"
             model-path="/models/horseshoe_crab_basic.glb"
-            :enable-sticky="true"
+            :show-model="true"
           >
             <template #content>
               <p class="text-lg leading-relaxed mb-6">
@@ -107,31 +107,36 @@ if (typeof window !== 'undefined') {
 
       <!-- Section: Brain Imaging and Analysis -->
       <section id="brain-imaging" class="mb-16">
-        <div class="image-container bg-gray-300 rounded-lg h-64 w-full mb-8 shadow-lg flex items-center justify-center">
-          <span class="text-gray-500">Brain Imaging Data</span>
-        </div>
         <div class="content text-left">
           <h2 class="text-3xl font-bold mb-6">Brain Imaging and Analysis</h2>
-          <p class="text-lg leading-relaxed mb-6">
-            Advanced brain imaging techniques provide non-invasive windows into brain structure and function. 
-            These methods enable researchers to study brain activity, connectivity, and changes over time in 
-            both healthy and diseased states.
-          </p>
           
-          <div class="bg-purple-50 rounded-lg p-6 mb-6">
-            <h3 class="text-xl font-semibold mb-4">Imaging Modalities</h3>
-            <ul class="list-disc list-inside space-y-2 text-base">
-              <li>Functional MRI (fMRI) for activity mapping</li>
-              <li>Diffusion MRI for white matter structure</li>
-              <li>PET imaging for metabolic processes</li>
-              <li>EEG/MEG for electrical activity</li>
-            </ul>
-          </div>
-          
-          <p class="text-lg leading-relaxed">
-            The integration of multiple imaging modalities with computational analysis techniques provides 
-            comprehensive insights into brain organization and function across different spatial and temporal scales.
-          </p>
+          <TwoPaneVisualizationSection
+            section-id="brain-imaging"
+            :show-model="false"
+          >
+            <template #content>
+              <p class="text-lg leading-relaxed mb-6">
+                Advanced brain imaging techniques provide non-invasive windows into brain structure and function. 
+                These methods enable researchers to study brain activity, connectivity, and changes over time in 
+                both healthy and diseased states.
+              </p>
+              
+              <div class="bg-purple-50 rounded-lg p-6 mb-6">
+                <h3 class="text-xl font-semibold mb-4">Imaging Modalities</h3>
+                <ul class="list-disc list-inside space-y-2 text-base">
+                  <li>Functional MRI (fMRI) for activity mapping</li>
+                  <li>Diffusion MRI for white matter structure</li>
+                  <li>PET imaging for metabolic processes</li>
+                  <li>EEG/MEG for electrical activity</li>
+                </ul>
+              </div>
+              
+              <p class="text-lg leading-relaxed">
+                The integration of multiple imaging modalities with computational analysis techniques provides 
+                comprehensive insights into brain organization and function across different spatial and temporal scales.
+              </p>
+            </template>
+          </TwoPaneVisualizationSection>
         </div>
       </section>
 
@@ -143,7 +148,7 @@ if (typeof window !== 'undefined') {
           <TwoPaneVisualizationSection
             section-id="computational-neuroscience"
             model-path="/models/horseshoe_crab_basic.glb"
-            :enable-sticky="true"
+            :show-model="true"
           >
             <template #content>
               <p class="text-lg leading-relaxed mb-6">

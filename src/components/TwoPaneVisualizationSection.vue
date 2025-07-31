@@ -1,163 +1,128 @@
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, inject } from 'vue'
+import { ref, onMounted, onBeforeUnmount, inject, nextTick, computed } from 'vue'
 import Shared3DModelViewer from './Shared3DModelViewer.vue'
+
+interface CardData {
+  id: string
+  content: string
+  active?: boolean
+}
 
 interface Props {
   sectionId: string
-  modelPath: string
-  enableSticky?: boolean
+  cards?: CardData[]
+  modelPath?: string
+  showModel?: boolean
   viewerOptions?: object
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  enableSticky: true,
+  cards: () => [],
+  modelPath: "/models/horseshoe_crab_basic.glb",
+  showModel: false,
   viewerOptions: () => ({})
 })
 
-// Refs for sticky positioning
-const visualizationColumnRef = ref<HTMLElement | null>(null)
-const isViewerSticky = ref(false)
+const emit = defineEmits<{
+  cardActivated: [cardId: string, cardIndex: number]
+}>()
 
-// Throttle function for scroll events
-const throttle = (func: Function, delay: number) => {
-  let timeoutId: number | null = null
-  let lastExecTime = 0
-  return function (this: any, ...args: any[]) {
-    const currentTime = Date.now()
-    
-    if (currentTime - lastExecTime > delay) {
-      func.apply(this, args)
-      lastExecTime = currentTime
-    } else {
-      if (timeoutId) clearTimeout(timeoutId)
-      timeoutId = setTimeout(() => {
-        func.apply(this, args)
-        lastExecTime = Date.now()
-      }, delay - (currentTime - lastExecTime))
-    }
-  }
-}
+// Refs for cards
+const cardRefs = ref<HTMLElement[]>([])
+const activeCardIndex = ref<number>(-1)
 
-// Handle sticky positioning for 3D viewer
-const handleViewerSticky = () => {
-  if (!visualizationColumnRef.value || !props.enableSticky) return
+// Track if we're using cards prop or slot content
+const usingCardsProp = computed(() => props.cards && props.cards.length > 0)
+
+
+// Setup card intersection observer
+const setupCardObserver = () => {
+  if (!usingCardsProp.value || cardRefs.value.length === 0) return
   
-  // Disable sticky behavior on mobile/tablet
-  if (window.innerWidth <= 768) {
-    isViewerSticky.value = false
-    return
+  const observerOptions = {
+    root: null,
+    rootMargin: '-20% 0px -20% 0px',
+    threshold: 0.6
   }
   
-  const columnRect = visualizationColumnRef.value.getBoundingClientRect()
-  const stickyThreshold = 20 // Distance from top to trigger sticky
-  
-  // Get the section container to determine boundaries
-  const sectionElement = visualizationColumnRef.value.closest('section')
-  if (!sectionElement) return
-  
-  const sectionRect = sectionElement.getBoundingClientRect()
-  const viewerHeight = 600 // Height of the 3D container
-  const viewerBottom = columnRect.top + viewerHeight
-  const shouldExitSticky = viewerBottom >= sectionRect.bottom - 20
-  
-  // Enter sticky mode when column top is near viewport top and we haven't reached section bottom
-  if (columnRect.top <= stickyThreshold && !shouldExitSticky) {
-    if (!isViewerSticky.value) {
-      updateStickyPosition()
-    }
-    isViewerSticky.value = true
-  }
-  // Exit sticky mode when viewer bottom aligns with section bottom or scrolling back up
-  else if (shouldExitSticky || columnRect.top > stickyThreshold) {
-    if (isViewerSticky.value) {
-      // Reset inline positioning when exiting sticky mode
-      const column = visualizationColumnRef.value
-      if (column) {
-        column.style.left = ''
-        column.style.right = ''
-        column.style.top = ''
-        column.style.transform = ''
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        const cardElement = entry.target as HTMLElement
+        const cardIndex = cardRefs.value.findIndex(ref => ref === cardElement)
+        
+        if (cardIndex !== -1 && cardIndex !== activeCardIndex.value) {
+          activeCardIndex.value = cardIndex
+          const card = props.cards![cardIndex]
+          emit('cardActivated', card.id, cardIndex)
+        }
       }
-    }
-    isViewerSticky.value = false
-  }
-}
-
-// Calculate and set viewport-centered sticky positioning
-const updateStickyPosition = () => {
-  if (!visualizationColumnRef.value) return
-  
-  // Get the main content container (max-width: 1200px, centered)
-  const pageContainer = document.querySelector('.page-container')
-  if (!pageContainer) return
-  
-  const pageRect = pageContainer.getBoundingClientRect()
-  
-  // Calculate the column's position relative to the content area
-  const contentMaxWidth = 1200
-  const availableWidth = Math.min(pageRect.width - 64, contentMaxWidth)
-  const contentStartX = pageRect.left + Math.max(32, (pageRect.width - contentMaxWidth) / 2)
-  
-  // Position the column in the right half of the content area
-  const rightColumnStart = contentStartX + (availableWidth / 2)
-  const columnWidth = 400 // Width of the visualization column
-  const viewerCenterOffset = (availableWidth / 2 - columnWidth) / 2
-  const leftPosition = rightColumnStart + viewerCenterOffset
-  
-  // Center vertically in viewport
-  const viewerHeight = 600
-  const topPosition = (window.innerHeight - viewerHeight) / 2
-  
-  // Apply the calculated position to the visualization column
-  const column = visualizationColumnRef.value
-  column.style.left = `${leftPosition}px`
-  column.style.top = `${topPosition}px`
-  column.style.right = 'auto'
-}
-
-// Throttled scroll handler
-const throttledScrollHandler = throttle(handleViewerSticky, 16) // ~60fps
-
-onMounted(() => {
-  if (props.enableSticky) {
-    // Add scroll event listener for sticky viewer
-    window.addEventListener('scroll', throttledScrollHandler, { passive: true })
-    
-    // Add resize event listener to recalculate sticky position
-    const handleResize = () => {
-      if (isViewerSticky.value) {
-        updateStickyPosition()
-      }
-    }
-    window.addEventListener('resize', handleResize)
-    
-    // Store handlers for cleanup
-    onBeforeUnmount(() => {
-      window.removeEventListener('scroll', throttledScrollHandler)
-      window.removeEventListener('resize', handleResize)
     })
+  }, observerOptions)
+  
+  // Observe all card elements
+  cardRefs.value.forEach(cardRef => {
+    if (cardRef) observer.observe(cardRef)
+  })
+  
+  return observer
+}
+
+onMounted(async () => {
+  let cardObserver: IntersectionObserver | null = null
+  
+  // Setup card observer if using cards prop
+  if (usingCardsProp.value) {
+    await nextTick() // Wait for DOM to be ready
+    cardObserver = setupCardObserver()
   }
+  
+  // Store observer for cleanup
+  onBeforeUnmount(() => {
+    if (cardObserver) {
+      cardObserver.disconnect()
+    }
+  })
 })
 </script>
 
 <template>
   <div class="two-pane-section">
-    <!-- Two-column layout: text left, 3D container right -->
-    <div class="two-column-layout">
-      <!-- Left Column: Content Slot -->
-      <div class="content-column">
-        <slot name="content"></slot>
+    <!-- Conditional layout: single column or two-column based on showModel -->
+    <div class="layout-container" :class="{ 'two-column-layout': showModel, 'single-column-layout': !showModel }">
+      <!-- Left Column: Cards or Slot Content (full width when showModel=false) -->
+      <div ref="contentColumnRef" class="content-column">
+        <!-- Cards from props (new system) -->
+        <div v-if="usingCardsProp" class="cards-container">
+          <div
+            v-for="(card, index) in cards"
+            :key="card.id"
+            :ref="el => { if (el) cardRefs[index] = el as HTMLElement }"
+            class="reading-card mb-6"
+            :class="{ 
+              'active': activeCardIndex === index || card.active, 
+              'inactive': activeCardIndex !== index && !card.active 
+            }"
+          >
+            <div v-html="card.content"></div>
+          </div>
+        </div>
+        
+        <!-- Slot content (backward compatibility) -->
+        <div v-else>
+          <slot name="content"></slot>
+        </div>
       </div>
       
-      <!-- Right Column: 3D Visualization -->
+      <!-- Right Column: 3D Visualization (only shown when showModel=true) -->
       <div 
+        v-if="showModel"
         ref="visualizationColumnRef"
         class="visualization-column"
-        :class="{ 'sticky': isViewerSticky }"
       >
         <Shared3DModelViewer
           :container-id="`${sectionId}-model-container`"
-          :model-path="modelPath"
+          :model-path="modelPath!"
           :viewer-options="viewerOptions"
         />
       </div>
@@ -170,15 +135,60 @@ onMounted(() => {
   width: 100%;
 }
 
+.layout-container {
+  width: 100%;
+}
+
 .two-column-layout {
   display: flex;
   gap: 2rem;
   align-items: flex-start;
 }
 
+.single-column-layout {
+  display: flex;
+  flex-direction: column;
+}
+
 .content-column {
   flex: 1;
   min-width: 0;
+}
+
+.cards-container {
+  width: 100%;
+}
+
+/* Card Styles */
+.reading-card {
+  padding: 1.5rem;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  margin-bottom: 1rem;
+}
+
+/* Active Card - Currently Reading */
+.reading-card.active {
+  background-color: #f8f9fa;
+  border-left: 3px solid #3b82f6;
+  color: #1f2937;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transform: translateX(4px);
+}
+
+/* Inactive Card - Not Currently Reading */
+.reading-card.inactive {
+  background-color: transparent;
+  border-left: 3px solid transparent;
+  color: #6b7280;
+  box-shadow: none;
+  transform: translateX(0);
+}
+
+/* Ensure smooth transitions for all card properties */
+.reading-card :deep(p) {
+  margin: 0;
+  transition: color 0.3s ease;
 }
 
 .visualization-column {
@@ -188,17 +198,9 @@ onMounted(() => {
   align-items: flex-start;
 }
 
-/* Sticky positioning for visualization column */
-.visualization-column.sticky {
-  position: fixed;
-  /* left and top positions will be set dynamically by JavaScript */
-  z-index: 100;
-  width: 400px; /* Fixed width when sticky */
-}
-
 /* Responsive Design */
 @media (max-width: 768px) {
-  /* Stack columns on tablet */
+  /* Stack columns on tablet when showing model */
   .two-column-layout {
     flex-direction: column;
     gap: 1.5rem;
@@ -206,15 +208,6 @@ onMounted(() => {
   
   .visualization-column {
     align-self: center;
-  }
-  
-  /* Disable sticky behavior on mobile/tablet */
-  .visualization-column.sticky {
-    position: relative !important;
-    top: auto !important;
-    left: auto !important;
-    width: auto !important;
-    z-index: auto !important;
   }
 }
 </style>

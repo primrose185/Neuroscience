@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, inject, nextTick, computed } from 'vue'
+import { ref, onMounted, onBeforeUnmount, nextTick, computed } from 'vue'
 import Shared3DModelViewer from './Shared3DModelViewer.vue'
 
 interface CardData {
@@ -14,22 +14,29 @@ interface Props {
   modelPath?: string
   showModel?: boolean
   viewerOptions?: object
+  globalActiveCardIndex?: number
 }
 
 const props = withDefaults(defineProps<Props>(), {
   cards: () => [],
   modelPath: "/models/horseshoe_crab_basic.glb",
   showModel: false,
-  viewerOptions: () => ({})
+  viewerOptions: () => ({}),
+  globalActiveCardIndex: -1
 })
 
 const emit = defineEmits<{
   cardActivated: [cardId: string, cardIndex: number]
 }>()
 
+// Click handler to activate a card
+const activateCard = (index: number) => {
+  const card = props.cards![index]
+  emit('cardActivated', card.id, index)
+}
+
 // Refs for cards
 const cardRefs = ref<HTMLElement[]>([])
-const activeCardIndex = ref<number>(-1)
 
 // Track if we're using cards prop or slot content
 const usingCardsProp = computed(() => props.cards && props.cards.length > 0)
@@ -41,8 +48,8 @@ const setupCardObserver = () => {
   
   const observerOptions = {
     root: null,
-    rootMargin: '-20% 0px -20% 0px',
-    threshold: 0.6
+    rootMargin: '-10% 0px -10% 0px', // Less restrictive for tall cards
+    threshold: 0.4 // Lower threshold for tall cards
   }
   
   const observer = new IntersectionObserver((entries) => {
@@ -51,8 +58,7 @@ const setupCardObserver = () => {
         const cardElement = entry.target as HTMLElement
         const cardIndex = cardRefs.value.findIndex(ref => ref === cardElement)
         
-        if (cardIndex !== -1 && cardIndex !== activeCardIndex.value) {
-          activeCardIndex.value = cardIndex
+        if (cardIndex !== -1 && cardIndex !== props.globalActiveCardIndex) {
           const card = props.cards![cardIndex]
           emit('cardActivated', card.id, cardIndex)
         }
@@ -100,9 +106,10 @@ onMounted(async () => {
             :ref="el => { if (el) cardRefs[index] = el as HTMLElement }"
             class="reading-card mb-6"
             :class="{ 
-              'active': activeCardIndex === index || card.active, 
-              'inactive': activeCardIndex !== index && !card.active 
+              'active': props.globalActiveCardIndex === index || card.active, 
+              'inactive': props.globalActiveCardIndex !== index && !card.active 
             }"
+            @click="activateCard(index)"
           >
             <div v-html="card.content"></div>
           </div>
@@ -183,6 +190,7 @@ onMounted(async () => {
   color: #6b7280;
   box-shadow: none;
   transform: translateX(0);
+  cursor: pointer;
 }
 
 /* Ensure smooth transitions for all card properties */

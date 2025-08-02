@@ -9,6 +9,7 @@ interface CardItem {
 }
 interface HeadingItem {
   type: 'heading'
+  id?: string; 
   text: string
 }
 type ListItem = CardItem | HeadingItem
@@ -111,7 +112,7 @@ onMounted(async () => {
               <div v-html="item.content"></div>
             </div>
 
-            <h2 v-else-if="item.type === 'heading'" class="text-3xl mt-12 mb-6">
+            <h2 v-else-if="item.type === 'heading'" :id="item.id" class="text-3xl mt-12 mb-6">
               {{ item.text }}
             </h2>
 
@@ -145,7 +146,7 @@ onMounted(async () => {
 
 .two-column-layout {
   display: flex;
-  gap: 2rem;
+  gap: 1rem;
   align-items: flex-start;
 }
 
@@ -202,7 +203,7 @@ onMounted(async () => {
 @media (max-width: 768px) {
   .two-column-layout {
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 1rem;
   }
   .visualization-column {
     align-self: center;

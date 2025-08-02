@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, computed, onMounted, defineEmits } from 'vue'
 import TwoPaneVisualizationSection from '../components/TwoPaneVisualizationSection.vue'
 import Shared3DModelViewer from '../components/Shared3DModelViewer.vue'
 
@@ -24,6 +24,35 @@ if (typeof window !== 'undefined') {
   (window as any).__pageMetadata = pageMetadata
 }
 
+const emit = defineEmits(['update-menu']);
+const pageMenuItems = computed(() => {
+  // Find all headings within your storyBlocks
+  const headings = storyBlocks.value.flatMap(block =>
+    (block.items || []).filter(item => item?.type === 'heading')
+  );
+
+  // The base menu item for the current page
+  const mainMenuItem = {
+    id: pageMetadata.id,
+    title: pageMetadata.title,
+    path: pageMetadata.path,
+    // Map the found headings to the format the sidebar expects
+    children: headings.map(heading => ({
+      id: heading.id,
+      title: heading.text,
+      // Create the path with a hash for scrolling: /topic1/page1#heading-id
+      path: `${pageMetadata.path}#${heading.id}`
+    }))
+  };
+  
+  return [mainMenuItem];
+});
+
+// When the component mounts, emit the generated menu data
+onMounted(() => {
+  emit('update-menu', pageMenuItems.value);
+});
+
 // --- Card Content Definitions ---
 const limulusCard1 = {
   id: 'limulus-card-1',
@@ -37,9 +66,19 @@ const experimentsCard1 = {
   id: 'experiments-card-1',
   content: `<p class="text-lg leading-relaxed" style="font-size: 18px;">Hartline's experiments began with the isolation of a single neuron, since understanding the behavior of a single neuron creates a baseline for researching the overall behavior in the retina. The response of a neuron to different sensory inputs corresponds to the rate of action potentials, which can be measured using an oscillograph.<br/><br/>The experimental setup is very invasive, since the electrodes of the oscillograph must be directly connected to the nerve fiber. The location of the optic nerve can be estimated based on the locations of the lateral and median eyes. According to this position, a hole is drilled into the carapace of the horseshoe crab, and the recording chamber is lowered into the hole to isolate the optic nerve.</p>`
 }
+const experimentsCard2 = {
+  id: 'experiments-card-2',
+  content: `<p class="text-lg leading-relaxed" style="font-size: 18px;">After removing the excess connective tissue and the sheath around the nerve, a single nerve fiber is isolated. This fiber is then cut, and the newly cut loose end of the fiber is connected to an electrode. The electrode can detect when an action potential passes through this fiber, which is then recorded on the oscillograph.</p>`
+}
+const experimentsCard3 = {
+  id: 'experiments-card-3',
+  content: `<p class="text-lg leading-relaxed" style="font-size: 18px;">This setup was used for many of Hartline's experiments, especially those that required the isolation of specific neurons. Conveniently, the visual field of a single neuron can be isolated by targeting the corresponding ommatidium and stimulating it with a precise fiber-optic light.<br/><br/>In the simplest configuration, a single ommatidium is illuminated. Using light to stimulate the ommatidium produces action potentials in the corresponding optic nerve fiber, which are recorded by the oscillograph.</p>`
+}
+const experimentsCard4 = {
+  id: 'experiments-card-4',
+  content: `<p class="text-lg leading-relaxed" style="font-size: 18px;">The above model illustrates the simulated activity of a bipolar neuron in the optic nerve, and the corresponding graph displays the results from the oscilloscope. Every spike in the graph represents an action potential. To explore how stimulus strength affected the activity in the neuron, Hartline also varied the intensity of the light.</p>`
+}
 
-
-// Change: A single, unified state tracking the active card's ID. Much simpler than offsets.
 const activeCardId = ref<string>(limulusCard1.id) // Set an initial active card
 
 interface StoryBlock {
@@ -58,6 +97,11 @@ const storyBlocks = ref([
     // Change: 'cards' array is now an 'items' array with typed objects.
     items: [
       { 
+        type: 'heading' as const, 
+        id: 'introducing-limulus-polyphemus',
+        text: 'Introducing Limulus polyphemus' 
+      },
+      { 
         type: 'card' as const, 
         id: 'limulus-card-1', 
         content: limulusCard1.content
@@ -69,12 +113,18 @@ const storyBlocks = ref([
       },
       { 
         type: 'heading' as const, 
+        id: 'experiments-with-single-ommatidia',
         text: 'Experiments with single ommatidia' 
       },
       { 
         type: 'card' as const, 
         id: 'experiments-card-1', 
         content: experimentsCard1.content
+      },
+      { 
+        type: 'card' as const, 
+        id: 'experiments-card-2', 
+        content: experimentsCard2.content
       },
     ]
   },
@@ -114,7 +164,6 @@ watch(activeCardId, (newId) => {
       </p>
       
       <div v-for="(block, index) in storyBlocks" :key="index">
-        
         <section v-if="block.type === 'sticky-model-group'" class="sticky-group-container">
           <div class="cards-column">
             <TwoPaneVisualizationSection
@@ -132,8 +181,24 @@ watch(activeCardId, (newId) => {
             />
           </div>
         </section>
-        
       </div>
+
+      <TwoPaneVisualizationSection
+        section-id="experiments-part-3"
+        :show-model="false"
+        :items="[{ 
+          type: 'card', 
+          id: experimentsCard3.id, 
+          content: experimentsCard3.content 
+        }]"
+        :active-card-id="activeCardId"
+        @card-activated="handleCardActivation"
+      />
+      
+      <p class="text-xl text-gray-700 mb-6"style="font-size: 18px">
+        <br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+      </p>
+      
     </div>
   </div>
 </template>
@@ -144,7 +209,6 @@ watch(activeCardId, (newId) => {
   display: flex;
   gap: 2rem;
   align-items: flex-start;
-  margin-bottom: 4rem;
 }
 
 .cards-column {

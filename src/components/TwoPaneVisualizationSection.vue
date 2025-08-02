@@ -1,72 +1,74 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, nextTick, computed } from 'vue'
-import Shared3DModelViewer from './Shared3DModelViewer.vue'
+import Shared3DModelViewer from '../components/Shared3DModelViewer.vue'
 
-interface CardData {
+interface CardItem {
+  type: 'card'
   id: string
   content: string
-  active?: boolean
 }
+interface HeadingItem {
+  type: 'heading'
+  text: string
+}
+type ListItem = CardItem | HeadingItem
 
 interface Props {
   sectionId: string
-  cards?: CardData[]
+  items?: ListItem[]
   modelPath?: string
   showModel?: boolean
   viewerOptions?: object
-  globalActiveCardIndex?: number
+  activeCardId?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  cards: () => [],
+  items: () => [],
   modelPath: "/models/horseshoe_crab_basic.glb",
   showModel: false,
   viewerOptions: () => ({}),
-  globalActiveCardIndex: -1
+  activeCardId: ''
 })
 
 const emit = defineEmits<{
   cardActivated: [cardId: string, cardIndex: number]
 }>()
 
-// Click handler to activate a card
-const activateCard = (index: number) => {
-  const card = props.cards![index]
+const activateCard = (card: CardItem, index: number) => {
   emit('cardActivated', card.id, index)
 }
 
-// Refs for cards
 const cardRefs = ref<HTMLElement[]>([])
+const usingItemsProp = computed(() => props.items && props.items.length > 0)
 
-// Track if we're using cards prop or slot content
-const usingCardsProp = computed(() => props.cards && props.cards.length > 0)
-
-
-// Setup card intersection observer
 const setupCardObserver = () => {
-  if (!usingCardsProp.value || cardRefs.value.length === 0) return
+  if (!usingItemsProp.value || cardRefs.value.length === 0) return
   
   const observerOptions = {
     root: null,
-    rootMargin: '-10% 0px -10% 0px', // Less restrictive for tall cards
-    threshold: 0.4 // Lower threshold for tall cards
+    rootMargin: '-10% 0px -10% 0px',
+    threshold: 0.4
   }
   
   const observer = new IntersectionObserver((entries) => {
     entries.forEach((entry) => {
       if (entry.isIntersecting) {
         const cardElement = entry.target as HTMLElement
-        const cardIndex = cardRefs.value.findIndex(ref => ref === cardElement)
+        // Find the original item index based on the element's ref
+        const itemIndex = cardRefs.value.findIndex(ref => ref === cardElement)
+        if (itemIndex === -1) return
+
+        const item = props.items![itemIndex]
         
-        if (cardIndex !== -1 && cardIndex !== props.globalActiveCardIndex) {
-          const card = props.cards![cardIndex]
-          emit('cardActivated', card.id, cardIndex)
+        // Only proceed if the item is a card and not already active
+        if (item.type === 'card' && item.id !== props.activeCardId) {
+          emit('cardActivated', item.id, itemIndex)
         }
       }
     })
   }, observerOptions)
   
-  // Observe all card elements
+  // Observe all card elements (refs for headings will be null)
   cardRefs.value.forEach(cardRef => {
     if (cardRef) observer.observe(cardRef)
   })
@@ -76,14 +78,11 @@ const setupCardObserver = () => {
 
 onMounted(async () => {
   let cardObserver: IntersectionObserver | null = null
-  
-  // Setup card observer if using cards prop
-  if (usingCardsProp.value) {
-    await nextTick() // Wait for DOM to be ready
+  if (usingItemsProp.value) {
+    await nextTick()
     cardObserver = setupCardObserver()
   }
   
-  // Store observer for cleanup
   onBeforeUnmount(() => {
     if (cardObserver) {
       cardObserver.disconnect()
@@ -94,39 +93,37 @@ onMounted(async () => {
 
 <template>
   <div class="two-pane-section">
-    <!-- Conditional layout: single column or two-column based on showModel -->
     <div class="layout-container" :class="{ 'two-column-layout': showModel, 'single-column-layout': !showModel }">
-      <!-- Left Column: Cards or Slot Content (full width when showModel=false) -->
-      <div ref="contentColumnRef" class="content-column">
-        <!-- Cards from props (new system) -->
-        <div v-if="usingCardsProp" class="cards-container">
-          <div
-            v-for="(card, index) in cards"
-            :key="card.id"
-            :ref="el => { if (el) cardRefs[index] = el as HTMLElement }"
-            class="reading-card mb-6"
-            :class="{ 
-              'active': props.globalActiveCardIndex === index || card.active, 
-              'inactive': props.globalActiveCardIndex !== index && !card.active 
-            }"
-            @click="activateCard(index)"
-          >
-            <div v-html="card.content"></div>
-          </div>
+      <div class="content-column">
+        <div v-if="usingItemsProp" class="cards-container">
+          <template v-for="(item, index) in items" :key="item.type === 'card' ? item.id : index">
+            
+            <div
+              v-if="item.type === 'card'"
+              :ref="el => { if (el) cardRefs[index] = el as HTMLElement }"
+              class="reading-card"
+              :class="{ 
+                'active': activeCardId === item.id, 
+                'inactive': activeCardId !== item.id 
+              }"
+              @click="activateCard(item, index)"
+            >
+              <div v-html="item.content"></div>
+            </div>
+
+            <h2 v-else-if="item.type === 'heading'" class="text-3xl mt-12 mb-6">
+              {{ item.text }}
+            </h2>
+
+          </template>
         </div>
         
-        <!-- Slot content (backward compatibility) -->
         <div v-else>
           <slot name="content"></slot>
         </div>
       </div>
       
-      <!-- Right Column: 3D Visualization (only shown when showModel=true) -->
-      <div 
-        v-if="showModel"
-        ref="visualizationColumnRef"
-        class="visualization-column"
-      >
+      <div v-if="showModel" class="visualization-column">
         <Shared3DModelViewer
           :container-id="`${sectionId}-model-container`"
           :model-path="modelPath!"
@@ -166,7 +163,6 @@ onMounted(async () => {
   width: 100%;
 }
 
-/* Card Styles */
 .reading-card {
   padding: 1.5rem;
   border-radius: 8px;
@@ -174,7 +170,6 @@ onMounted(async () => {
   margin-bottom: 1rem;
 }
 
-/* Active Card - Currently Reading */
 .reading-card.active {
   background-color: #f8f9fa;
   border-left: 3px solid #3b82f6;
@@ -183,7 +178,6 @@ onMounted(async () => {
   transform: translateX(4px);
 }
 
-/* Inactive Card - Not Currently Reading */
 .reading-card.inactive {
   background-color: transparent;
   border-left: 3px solid transparent;
@@ -193,7 +187,6 @@ onMounted(async () => {
   cursor: pointer;
 }
 
-/* Ensure smooth transitions for all card properties */
 .reading-card :deep(p) {
   margin: 0;
   transition: color 0.3s ease;
@@ -206,14 +199,11 @@ onMounted(async () => {
   align-items: flex-start;
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
-  /* Stack columns on tablet when showing model */
   .two-column-layout {
     flex-direction: column;
     gap: 1.5rem;
   }
-  
   .visualization-column {
     align-self: center;
   }

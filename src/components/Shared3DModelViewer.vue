@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, nextTick, provide, inject } from 'vue'
+import { ref, onMounted, onBeforeUnmount, nextTick, provide, inject, computed } from 'vue'
 import Generic3DModelViewer from '../utilities/Generic3DModelViewer.js'
 import * as THREE from 'three'
 
@@ -7,10 +7,14 @@ interface Props {
   containerId: string
   modelPath: string
   viewerOptions?: object
+  width?: number | string
+  height?: number | string
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  viewerOptions: () => ({})
+  viewerOptions: () => ({}),
+  width: 400,
+  height: 700
 })
 
 // Shared model data - using provide/inject pattern for model sharing, not viewer sharing
@@ -24,17 +28,23 @@ let modalModelViewer: Generic3DModelViewer | null = null
 // Modal state
 const isModalOpen = ref(false)
 
+// Computed styles for dynamic dimensions
+const containerStyle = computed(() => ({
+  width: typeof props.width === 'number' ? `${props.width}px` : props.width,
+  height: typeof props.height === 'number' ? `${props.height}px` : props.height
+}))
+
 // Create depth-enhancing gradient texture for scene background
-function createDepthGradientTexture(color1: string, color2: string): THREE.Texture {
+function createDepthGradientTexture(color1: string, color2: string, width: number = 1024, height: number = 1024): THREE.Texture {
   const canvas = document.createElement('canvas')
   const ctx = canvas.getContext('2d')!
   
-  canvas.width = 1024
-  canvas.height = 1024
+  canvas.width = width
+  canvas.height = height
   
   const gradient = ctx.createRadialGradient(
     canvas.width * 0.5, canvas.height * 0.5, 0,
-    canvas.width * 0.5, canvas.height * 0.5, canvas.width * 0.7
+    canvas.width * 0.5, canvas.height * 0.5, Math.max(canvas.width, canvas.height) * 0.7
   )
   
   gradient.addColorStop(0, color1)
@@ -96,8 +106,10 @@ onMounted(async () => {
     // Create a new viewer instance for this container
     localViewer = new Generic3DModelViewer(props.containerId, mergedOptions)
     
-    // Apply gradient background
-    const gradientTexture = createDepthGradientTexture('#ecebf5', '#6c6596')
+    // Apply gradient background with container dimensions
+    const containerWidth = typeof props.width === 'number' ? props.width : 400
+    const containerHeight = typeof props.height === 'number' ? props.height : 700
+    const gradientTexture = createDepthGradientTexture('#ecebf5', '#6c6596', containerWidth, containerHeight)
     localViewer.scene.background = gradientTexture
 
     // Check if we already have shared model data
@@ -171,8 +183,8 @@ const initializeModalViewer = async () => {
       }
     })
     
-    // Apply gradient background
-    const modalGradientTexture = createDepthGradientTexture('#e4e1f2', '#7b6add')
+    // Apply gradient background for modal (fixed dimensions)
+    const modalGradientTexture = createDepthGradientTexture('#e4e1f2', '#7b6add', 900, 700)
     modalModelViewer.scene.background = modalGradientTexture
     
     // Load model in modal using shared data if available
@@ -225,6 +237,7 @@ defineExpose({
     <div 
       :id="containerId"
       class="model-3d-container"
+      :style="containerStyle"
     >
       <!-- Expand Icon -->
       <button 
@@ -263,8 +276,6 @@ defineExpose({
 
 /* 3D Container Styling */
 .model-3d-container {
-  width: 400px;
-  height: 600px;
   border: 2px solid #d1d5db;
   border-radius: 8px;
   background-color: #f9fafb;

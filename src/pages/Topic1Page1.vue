@@ -26,10 +26,12 @@ if (typeof window !== 'undefined') {
 
 const emit = defineEmits(['update-menu']);
 const pageMenuItems = computed(() => {
-  // Find all headings within your storyBlocks
-  const headings = storyBlocks.value.flatMap(block =>
-    (block.items || []).filter(item => item?.type === 'heading')
-  );
+  // Find all headings within both story block groups
+  const headings = [
+    ...storyBlocksGroup1.value.flatMap(block =>
+      (block.items || []).filter(item => item?.type === 'heading')
+    )
+  ];
 
   // The base menu item for the current page
   const mainMenuItem = {
@@ -76,25 +78,39 @@ const experimentsCard3 = {
 }
 const experimentsCard4 = {
   id: 'experiments-card-4',
-  content: `<p class="text-lg leading-relaxed" style="font-size: 18px;">The above model illustrates the simulated activity of a bipolar neuron in the optic nerve, and the corresponding graph displays the results from the oscilloscope. Every spike in the graph represents an action potential. To explore how stimulus strength affected the activity in the neuron, Hartline also varied the intensity of the light.</p>`
+  content: `<p class="text-lg leading-relaxed" style="font-size: 18px;">The above model illustrates the simulated activity of a bipolar neuron in the optic nerve, and the corresponding graph displays the results from the oscilloscope. Every spike in the graph represents an action potential, and smaller spaces between each spike indicate a higher rate of activity. To explore how stimulus strength affected the activity in the neuron, Hartline also varied the intensity of the light.</p>`
+}
+const experimentsCard5 = {
+  id: 'experiments-card-5',
+  content: `<p class="text-lg leading-relaxed" style="font-size: 18px;">Two major observations were made through this experimental configuration. The first observation confirmed that the frequency of action potentials increases as the intensity of the light increases. Although this concept was already theorized before Hartline's experiments, the quantitative evidence gathered from single neurons was limited, and Hartline was the first to do so with the optic nerve.</p>`
+}
+const experimentsCard6 = {
+  id: 'experiments-card-6',
+  content: `<p class="text-lg leading-relaxed" style="font-size: 18px;">The second major observation is that the neuron fires at different frequencies depending on when the stimulus is introduced, firing more rapidly when the light is first turned on. The activity of the neuron decreases once the light is held steady.<br/><br/>This behavior reaffirms the concept of sensory adaptation, which describes the tendency of sensory systems to react and adjust to changes in the environment. The initial frequency is faster in response to the onset of light stimulation, indicating a sudden increase in intensity, which then stabilizes into a more regular rate of firing.</p>`
+}
+const experimentsCard7 = {
+  id: 'experiments-card-7',
+  content: `<p class="text-lg leading-relaxed" style="font-size: 18px;">Hartline notes that “the basic mechanism of the receptor is one that emphasizes change.” These experiments on single fibers in the optic nerve are early demonstrations of a recurring theme in research on sensory systems.</p>`
 }
 
 const activeCardId = ref<string>(limulusCard1.id) // Set an initial active card
 
 interface StoryBlock {
-  type: 'sticky-model-group' | 'text-only-section'
+  type: 'sticky-model-group' | 'full-width-sticky-model' | 'text-only-section'
   modelPath?: string
   cards?: Array<{id: string, content: string}>
   title?: string
   useSlotContent?: boolean
+  modelWidth?: number
+  modelHeight?: number
+  items?: Array<{type: 'card' | 'heading', id?: string, text?: string, content?: string}>
 }
 
-// Change: A new data structure that defines the layout of the entire page.
-const storyBlocks = ref([
+// First group: Introduction and basic experiments
+const storyBlocksGroup1 = ref([
   {
     type: 'sticky-model-group',
     modelPath: '/models/horseshoe_crab_basic.glb',
-    // Change: 'cards' array is now an 'items' array with typed objects.
     items: [
       { 
         type: 'heading' as const, 
@@ -125,6 +141,36 @@ const storyBlocks = ref([
         type: 'card' as const, 
         id: 'experiments-card-2', 
         content: experimentsCard2.content
+      },
+    ]
+  },
+]);
+
+// Second group: Advanced experiments with full-width model
+const storyBlocksGroup2 = ref([
+  {
+    type: 'full-width-sticky-model',
+    modelPath: '/models/horseshoe_crab_basic.glb',
+    items: [
+      { 
+        type: 'card' as const, 
+        id: 'experiments-card-4', 
+        content: experimentsCard4.content
+      },
+      { 
+        type: 'card' as const, 
+        id: 'experiments-card-5', 
+        content: experimentsCard5.content
+      },
+      { 
+        type: 'card' as const, 
+        id: 'experiments-card-6', 
+        content: experimentsCard6.content
+      },
+      { 
+        type: 'card' as const, 
+        id: 'experiments-card-7', 
+        content: experimentsCard7.content
       },
     ]
   },
@@ -163,11 +209,12 @@ watch(activeCardId, (newId) => {
         The Nobel Prize in Physiology or Medicine in 1967 was awarded jointly to Haldan Keffer Hartline, Ragnar Granit, and George Wald for their discoveries concerning visual processes. In his Nobel Lecture, Hartline explains his work on the concept of lateral inhibition, a defining characteristic of retinal interactions that demonstrates the importance of contrast in visual processing.
       </p>
       
-      <div v-for="(block, index) in storyBlocks" :key="index">
+      <!-- First story block group: Introduction and basic experiments -->
+      <div v-for="(block, index) in storyBlocksGroup1" :key="`group1-${index}`">
         <section v-if="block.type === 'sticky-model-group'" class="sticky-group-container">
           <div class="cards-column">
             <TwoPaneVisualizationSection
-              :section-id="`group-${index}`"
+              :section-id="`group1-${index}`"
               :show-model="false"
               :items="block.items"
               :active-card-id="activeCardId"
@@ -176,13 +223,16 @@ watch(activeCardId, (newId) => {
           </div>
           <div class="model-column-sticky">
             <Shared3DModelViewer
-              :container-id="`sticky-model-${index}`"
+              :container-id="`sticky-model-group1-${index}`"
               :model-path="block.modelPath!"
+              :width="400"
+              :height="700"
             />
           </div>
         </section>
       </div>
 
+      <!-- Transition section: experimentsCard3 -->
       <TwoPaneVisualizationSection
         section-id="experiments-part-3"
         :show-model="false"
@@ -194,9 +244,33 @@ watch(activeCardId, (newId) => {
         :active-card-id="activeCardId"
         @card-activated="handleCardActivation"
       />
+
+      <!-- Second story block group: Advanced experiments with full-width model -->
+      <div v-for="(block, index) in storyBlocksGroup2" :key="`group2-${index}`">
+        <section v-if="block.type === 'full-width-sticky-model'" class="full-width-sticky-container">
+          <div class="full-width-model-sticky">
+            <Shared3DModelViewer
+              :container-id="`full-width-model-group2-${index}`"
+              :model-path="block.modelPath!"
+              :width=1000
+              :height=200
+            />
+          </div>
+          <div class="full-width-cards-column">
+            <TwoPaneVisualizationSection
+              :section-id="`full-width-group2-${index}`"
+              :show-model="false"
+              :items="block.items"
+              :active-card-id="activeCardId"
+              @card-activated="handleCardActivation"
+            />
+          </div>
+        </section>
+
+      </div>
       
       <p class="text-xl text-gray-700 mb-6"style="font-size: 18px">
-        <br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+        <br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
       </p>
       
     </div>
@@ -236,6 +310,29 @@ watch(activeCardId, (newId) => {
     position: sticky;
     top: 1rem;
   }
+}
+
+/* Full-width sticky model layout */
+.full-width-sticky-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 0rem 0;
+}
+
+.full-width-model-sticky {
+  width: 100%;
+  top: 1rem;
+  position: sticky;
+  background: white;
+  margin-bottom: 1rem;
+  z-index: 10;
+  padding: 1rem;
+}
+
+.full-width-cards-column {
+  width: 100%;
+  padding-top: 1rem;
 }
 
 .tag-chip {

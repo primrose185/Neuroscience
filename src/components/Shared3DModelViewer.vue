@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, nextTick, provide, inject, computed } from 'vue'
+import { ref, onMounted, onBeforeUnmount, nextTick, provide, inject, computed, watch } from 'vue'
 import Generic3DModelViewer from '../utilities/Generic3DModelViewer.js'
 import * as THREE from 'three'
 
@@ -18,8 +18,9 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 // Shared model data - using provide/inject pattern for model sharing, not viewer sharing
-const sharedModelData = inject('sharedModelData', ref<any>(null))
-const setSharedModelData = inject('setSharedModelData', (data: any) => {})
+// Use a Map to cache multiple models by path
+const sharedModelCache = inject('sharedModelCache', ref<Map<string, any>>(new Map()))
+const setSharedModelCache = inject('setSharedModelCache', (path: string, data: any) => {})
 
 // Local viewer instance for this container (each container gets its own viewer)
 let localViewer: Generic3DModelViewer | null = null
@@ -27,6 +28,98 @@ let modalModelViewer: Generic3DModelViewer | null = null
 
 // Modal state
 const isModalOpen = ref(false)
+
+// Function to load model with caching
+const loadModelWithCache = async (modelPath: string) => {
+  if (!localViewer) return
+  
+  // Check if we already have cached model data for this path
+  const cachedModel = sharedModelCache.value.get(modelPath)
+  
+  if (!cachedModel) {
+    // Load the model for the first time and store the GLTF data for sharing
+    console.log('Loading model for sharing:', modelPath)
+    
+    // Load fresh GLTF data for sharing
+    const { GLTFLoader } = await import('three/examples/jsm/loaders/GLTFLoader.js')
+    const { DRACOLoader } = await import('three/examples/jsm/loaders/DRACOLoader.js')
+    
+    const loader = new GLTFLoader()
+    const dracoLoader = new DRACOLoader()
+    dracoLoader.setDecoderPath('/draco/')
+    loader.setDRACOLoader(dracoLoader)
+    
+    const gltfData = await new Promise((resolve, reject) => {
+      loader.load(modelPath, resolve, undefined, reject)
+    })
+    
+    // Cache the GLTF data
+    sharedModelCache.value.set(modelPath, gltfData)
+    setSharedModelCache(modelPath, gltfData)
+    
+    // Load the model into the viewer
+    const result = await localViewer.loadFromGLTFData(gltfData, {
+      scale: 1.0,
+      position: { x: 0, y: 0, z: 0 },
+      autoPlay: false, // We'll manually control animations
+      fitCamera: true
+    })
+    
+    // For models with animations, play animation once
+    const hasAnimations = result.animations && result.animations.length > 0
+    const isAnimatedModel = modelPath.includes('animated') || 
+                           modelPath.includes('recordingChamber_hscrab') || 
+                           modelPath.includes('electrode_hscrab')
+    
+    if (hasAnimations && isAnimatedModel) {
+      // Log detailed animation info for debugging
+      console.log('Detected animated model:', modelPath)
+      localViewer.getAnimationInfo()
+      
+      // Play the first animation (typically the main one)
+      localViewer.playAnimation(0, {
+        loop: THREE.LoopOnce,
+        clampWhenFinished: true
+      })
+    } else if (hasAnimations) {
+      // Log available animations for non-animated models
+      console.log('Model has animations but not configured for auto-play:', localViewer.getAnimationNames())
+    }
+    
+    console.log('Created and stored shared model data for:', props.containerId)
+  } else {
+    // Use the cached GLTF data to load the model
+    const result = await localViewer.loadFromGLTFData(cachedModel, {
+      scale: 1.0,
+      position: { x: 0, y: 0, z: 0 },
+      autoPlay: false, // We'll manually control animations
+      fitCamera: true
+    })
+    
+    // For models with animations, play animation once
+    const hasAnimations = localViewer.getAnimationNames().length > 0
+    const isAnimatedModel = modelPath.includes('animated') || 
+                           modelPath.includes('recordingChamber_hscrab') || 
+                           modelPath.includes('electrode_hscrab')
+    
+    if (hasAnimations && isAnimatedModel) {
+      // Log detailed animation info for debugging
+      console.log('Detected animated model (cached):', modelPath)
+      localViewer.getAnimationInfo()
+      
+      // Play the first animation (typically the main one)
+      localViewer.playAnimation(0, {
+        loop: THREE.LoopOnce,
+        clampWhenFinished: true
+      })
+    } else if (hasAnimations) {
+      // Log available animations for non-animated models
+      console.log('Cached model has animations but not configured for auto-play:', localViewer.getAnimationNames())
+    }
+    
+    console.log('Loaded model from cached GLTF data for:', props.containerId)
+  }
+}
 
 // Computed styles for dynamic dimensions
 const containerStyle = computed(() => ({
@@ -112,52 +205,22 @@ onMounted(async () => {
     const gradientTexture = createDepthGradientTexture('#ecebf5', '#6c6596', containerWidth, containerHeight)
     localViewer.scene.background = gradientTexture
 
-    // Check if we already have shared model data
-    if (!sharedModelData.value) {
-      // Load the model for the first time and store the GLTF data for sharing
-      const result = await localViewer.loadModel(props.modelPath, {
-        scale: 1.0,
-        position: { x: 0, y: 0, z: 0 },
-        autoPlay: false,
-        fitCamera: true
-      })
-      
-      // Store the GLTF data for sharing (not the Three.js objects)
-      // We need to access the original GLTF data from the loader
-      console.log('Loading model for sharing:', props.modelPath)
-      
-      // Load fresh GLTF data for sharing
-      const { GLTFLoader } = await import('three/examples/jsm/loaders/GLTFLoader.js')
-      const { DRACOLoader } = await import('three/examples/jsm/loaders/DRACOLoader.js')
-      
-      const loader = new GLTFLoader()
-      const dracoLoader = new DRACOLoader()
-      dracoLoader.setDecoderPath('/draco/')
-      loader.setDRACOLoader(dracoLoader)
-      
-      const gltfData = await new Promise((resolve, reject) => {
-        loader.load(props.modelPath, resolve, undefined, reject)
-      })
-      
-      setSharedModelData(gltfData)
-      console.log('Created and stored shared model data for:', props.containerId)
-    } else {
-      // Use the shared GLTF data to load the model
-      await localViewer.loadFromGLTFData(sharedModelData.value, {
-        scale: 1.0,
-        position: { x: 0, y: 0, z: 0 },
-        autoPlay: false,
-        fitCamera: true
-      })
-      
-      console.log('Loaded model from shared GLTF data for:', props.containerId)
-    }
+    // Load model with caching by path
+    await loadModelWithCache(props.modelPath)
   } catch (error) {
     console.error('Failed to load 3D model:', error)
   }
   
   // Add keyboard event listener for modal
   window.addEventListener('keydown', handleKeydown)
+})
+
+// Watch for modelPath changes and reload model
+watch(() => props.modelPath, async (newPath, oldPath) => {
+  if (newPath !== oldPath && localViewer) {
+    console.log('Model path changed from', oldPath, 'to', newPath)
+    await loadModelWithCache(newPath)
+  }
 })
 
 // Watch for modal state changes to initialize/cleanup modal 3D viewer
@@ -169,6 +232,7 @@ const initializeModalViewer = async () => {
     modalModelViewer = new Generic3DModelViewer(`modal-${props.containerId}`, {
       static: false,
       enableControls: true,
+      modalMode: true,
       background: 0x000000,
       fog: false,
       lights: {
@@ -187,21 +251,36 @@ const initializeModalViewer = async () => {
     const modalGradientTexture = createDepthGradientTexture('#e4e1f2', '#7b6add', 900, 700)
     modalModelViewer.scene.background = modalGradientTexture
     
-    // Load model in modal using shared data if available
+    // Load model in modal using cached data
     try {
-      if (sharedModelData.value) {
-        await modalModelViewer.loadFromGLTFData(sharedModelData.value, {
+      const cachedModel = sharedModelCache.value.get(props.modelPath)
+      if (cachedModel) {
+        await modalModelViewer.loadFromGLTFData(cachedModel, {
           scale: 1.0,
           position: { x: 0, y: 0, z: 0 },
-          autoPlay: false,
+          autoPlay: false, // We'll manually control animations
           fitCamera: true
         })
       } else {
         await modalModelViewer.loadModel(props.modelPath, {
           scale: 1.0,
           position: { x: 0, y: 0, z: 0 },
-          autoPlay: false,
+          autoPlay: false, // We'll manually control animations
           fitCamera: true
+        })
+      }
+      
+      // For models with animations, play animation once
+      const hasAnimations = modalModelViewer.getAnimationNames().length > 0
+      const isAnimatedModel = props.modelPath.includes('animated') || 
+                             props.modelPath.includes('recordingChamber_hscrab') || 
+                             props.modelPath.includes('electrode_hscrab')
+      
+      if (hasAnimations && isAnimatedModel) {
+        console.log('Playing animation in modal for:', props.modelPath)
+        modalModelViewer.playAnimation(0, {
+          loop: THREE.LoopOnce,
+          clampWhenFinished: true
         })
       }
       
@@ -249,26 +328,29 @@ defineExpose({
       </button>
     </div>
 
-    <!-- Modal Popup for Expanded 3D View -->
-    <div v-if="isModalOpen" class="modal-overlay" @click="closeModal">
-      <div class="modal-content" @click.stop>
-        <!-- Close Button -->
-        <button 
-          @click="closeModal"
-          class="modal-close"
-          title="Close expanded view"
-        >
-          ×
-        </button>
-        
-        <!-- Modal 3D Container -->
-        <div :id="`modal-${containerId}`" class="modal-3d-container"></div>
+    <!-- Modal Popup for Expanded 3D View - Teleported to body -->
+    <Teleport to="body">
+      <div v-if="isModalOpen" class="modal-overlay" @click="closeModal">
+        <div class="modal-content" @click.stop>
+          <!-- Close Button -->
+          <button 
+            @click="closeModal"
+            class="modal-close"
+            title="Close expanded view"
+          >
+            ×
+          </button>
+          
+          <!-- Modal 3D Container -->
+          <div :id="`modal-${containerId}`" class="modal-3d-container"></div>
+        </div>
       </div>
-    </div>
+    </Teleport>
   </div>
 </template>
 
 <style scoped>
+/* Component styles remain scoped */
 .shared-3d-viewer {
   width: 100%;
   height: 100%;
@@ -315,7 +397,31 @@ defineExpose({
   text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.9);
 }
 
-/* Modal Styles */
+/* Responsive Design */
+@media (max-width: 768px) {
+  .model-3d-container {
+    width: 100%;
+    max-width: 350px;
+    height: 500px;
+  }
+  
+  .expand-icon {
+    font-size: 14px;
+    padding: 3px 6px;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Mobile optimizations */
+  .model-3d-container {
+    height: 400px;
+  }
+}
+</style>
+
+<!-- Global styles for teleported modal -->
+<style>
+/* Modal Styles - Global because teleported to body */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -326,8 +432,10 @@ defineExpose({
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 9999;
   backdrop-filter: blur(2px);
+  /* Create new stacking context to ensure modal appears above everything */
+  isolation: isolate;
 }
 
 .modal-content {
@@ -382,34 +490,16 @@ defineExpose({
   border-radius: 8px;
 }
 
-/* Responsive Design */
+/* Responsive Design for Modal */
 @media (max-width: 768px) {
-  .model-3d-container {
-    width: 100%;
-    max-width: 350px;
-    height: 500px;
-  }
-  
-  /* Modal responsive design */
   .modal-content {
     width: 95vw;
     height: 80vh;
     padding: 15px;
   }
-  
-  .expand-icon {
-    font-size: 14px;
-    padding: 3px 6px;
-  }
 }
 
 @media (max-width: 480px) {
-  /* Mobile optimizations */
-  .model-3d-container {
-    height: 400px;
-  }
-  
-  /* Modal mobile design */
   .modal-content {
     width: 100vw;
     height: 100vh;

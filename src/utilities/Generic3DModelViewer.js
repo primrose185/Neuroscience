@@ -20,11 +20,12 @@ class Generic3DModelViewer {
       enableControls: true,
       static: false,
       autoRotate: false,
+      modalMode: false,
       background: 0x000000,
       fog: false,
       lights: {
-        ambient: { color: 0x404040, intensity: 0.4 },
-        directional: { color: 0xffffff, intensity: 0.8 }
+        ambient: { color: 0xffffff, intensity: 1 },
+        directional: { color: 0xffffff, intensity: 1 }
       },
       camera: {
         position: { x: 0, y: 5, z: 10 },
@@ -89,6 +90,10 @@ class Generic3DModelViewer {
       this.controls.dampingFactor = 0.05;
       this.controls.autoRotate = this.options.autoRotate;
       this.controls.autoRotateSpeed = 2.0;
+      
+      // Disable default zoom and add custom shift+scroll zoom
+      this.controls.enableZoom = false;
+      this.setupCustomZoom();
     }
     
     // Lighting setup
@@ -123,9 +128,11 @@ class Generic3DModelViewer {
     this.scene.add(directionalLight);
     
     // Helper light for better model visibility
-    const fillLight = new THREE.DirectionalLight(0xffffff, 0.3);
+    const fillLight = new THREE.DirectionalLight(0xffffff, 0.5);
     fillLight.position.set(-10, 0, -10);
     this.scene.add(fillLight);
+    const fillLight2 = new THREE.AmbientLight(0xffffff, 0.7);
+    this.scene.add(fillLight2);
   }
   
   async loadModel(modelPath, options = {}) {
@@ -360,19 +367,41 @@ class Generic3DModelViewer {
       return;
     }
     
-    const action = this.mixer.clipAction(this.animations[index]);
+    const animation = this.animations[index];
+    const action = this.mixer.clipAction(animation);
+    
+    // Reset action before playing
+    action.reset();
     
     // Apply options
     if (options.loop !== undefined) {
       action.loop = options.loop;
+      console.log(`Setting animation loop mode:`, options.loop);
     }
     
     if (options.clampWhenFinished) {
       action.clampWhenFinished = true;
+      console.log('Animation will clamp when finished');
     }
     
     if (options.weight !== undefined) {
       action.weight = options.weight;
+    }
+    
+    // Log animation details for debugging
+    console.log(`Playing animation "${animation.name || 'unnamed'}" (index: ${index})`);
+    console.log(`Animation duration: ${animation.duration} seconds`);
+    console.log(`Animation tracks: ${animation.tracks.length}`);
+    
+    // Add event listener for finished event if using LoopOnce
+    if (options.loop === THREE.LoopOnce) {
+      const onFinished = (event) => {
+        if (event.action === action) {
+          console.log(`Animation "${animation.name || 'unnamed'}" finished at time:`, event.action.time);
+          this.mixer.removeEventListener('finished', onFinished);
+        }
+      };
+      this.mixer.addEventListener('finished', onFinished);
     }
     
     action.play();
@@ -397,6 +426,72 @@ class Generic3DModelViewer {
   
   getAnimationNames() {
     return this.animations.map(animation => animation.name);
+  }
+  
+  getAnimationInfo() {
+    if (!this.animations || this.animations.length === 0) {
+      return 'No animations available';
+    }
+    
+    console.log('=== Animation Debug Info ===');
+    this.animations.forEach((animation, index) => {
+      console.log(`Animation ${index}: "${animation.name || 'unnamed'}"`);
+      console.log(`  Duration: ${animation.duration} seconds`);
+      console.log(`  Tracks: ${animation.tracks.length}`);
+      console.log(`  Track details:`);
+      
+      animation.tracks.forEach((track, trackIndex) => {
+        console.log(`    Track ${trackIndex}: ${track.name} (${track.times.length} keyframes)`);
+        console.log(`      Type: ${track.constructor.name}`);
+        console.log(`      Duration: ${track.times[track.times.length - 1] - track.times[0]} seconds`);
+      });
+      
+      if (this.mixer) {
+        const action = this.mixer.clipAction(animation);
+        console.log(`  Action state: ${action.isRunning() ? 'running' : 'stopped'}`);
+        console.log(`  Action time: ${action.time} / ${action.getClip().duration}`);
+        console.log(`  Loop mode: ${action.loop}`);
+        console.log(`  Clamp when finished: ${action.clampWhenFinished}`);
+      }
+      console.log('---');
+    });
+    console.log('========================');
+  }
+  
+  // Helper method to test all animations sequentially
+  testAllAnimations() {
+    if (!this.animations || this.animations.length === 0) {
+      console.log('No animations to test');
+      return;
+    }
+    
+    console.log('Testing all animations sequentially...');
+    
+    const playNextAnimation = (index) => {
+      if (index >= this.animations.length) {
+        console.log('All animations tested');
+        return;
+      }
+      
+      console.log(`Testing animation ${index}: ${this.animations[index].name}`);
+      const action = this.playAnimation(index, {
+        loop: THREE.LoopOnce,
+        clampWhenFinished: true
+      });
+      
+      // Wait for animation to finish before playing next
+      const onFinished = (event) => {
+        if (event.action === action) {
+          console.log(`Animation ${index} finished, moving to next...`);
+          this.mixer.removeEventListener('finished', onFinished);
+          setTimeout(() => playNextAnimation(index + 1), 1000); // 1 second delay
+        }
+      };
+      
+      this.mixer.addEventListener('finished', onFinished);
+    };
+    
+    playNextAnimation(0);
   }
   
   setBackground(color) {
@@ -528,6 +623,16 @@ class Generic3DModelViewer {
     // Update animations
     if (this.mixer) {
       this.mixer.update(delta);
+      
+      // Debug animation progress (only log occasionally to avoid spam)
+      if (this.mixer._actions && this.mixer._actions.length > 0 && Math.random() < 0.01) {
+        this.mixer._actions.forEach((action, i) => {
+          if (action.isRunning()) {
+            const progress = (action.time / action.getClip().duration * 100).toFixed(1);
+            console.log(`Animation ${i} progress: ${progress}% (${action.time.toFixed(2)}s / ${action.getClip().duration.toFixed(2)}s)`);
+          }
+        });
+      }
     }
     
     // Update controls
@@ -539,6 +644,46 @@ class Generic3DModelViewer {
     this.renderer.render(this.scene, this.camera);
   }
   
+  setupCustomZoom() {
+    // Detect if this is a modal viewer (fallback detection)
+    const isModalByContainer = this.container.id.includes('modal-');
+    const isModal = this.options.modalMode || isModalByContainer;
+    
+    // Custom zoom handler with modal-aware behavior
+    this.customZoomHandler = (event) => {
+      // Modal viewers: regular scroll zooms, Inline viewers: shift+scroll zooms
+      const shouldZoom = isModal ? true : event.shiftKey;
+      
+      if (shouldZoom) {
+        event.preventDefault();
+        
+        // Get zoom direction (-1 for zoom out, 1 for zoom in)
+        const zoomDirection = event.deltaY > 0 ? -1 : 1;
+        const zoomSpeed = 0.1;
+        
+        // Calculate new camera position based on zoom direction
+        const direction = new THREE.Vector3();
+        this.camera.getWorldDirection(direction);
+        direction.multiplyScalar(zoomDirection * zoomSpeed);
+        
+        // Move camera towards or away from the target
+        const newPosition = this.camera.position.clone().add(direction);
+        
+        // Maintain minimum distance to prevent camera from going through the model
+        const minDistance = 0.5;
+        const target = this.controls ? this.controls.target : new THREE.Vector3(0, 0, 0);
+        const distanceToTarget = newPosition.distanceTo(target);
+        
+        if (distanceToTarget > minDistance) {
+          this.camera.position.copy(newPosition);
+        }
+      }
+    };
+    
+    // Add event listener to the renderer's canvas
+    this.renderer.domElement.addEventListener('wheel', this.customZoomHandler, { passive: false });
+  }
+  
   dispose() {
     // Clean up resources
     if (this.mixer) {
@@ -547,6 +692,11 @@ class Generic3DModelViewer {
     
     if (this.controls) {
       this.controls.dispose();
+    }
+    
+    // Remove custom zoom event listener
+    if (this.customZoomHandler) {
+      this.renderer.domElement.removeEventListener('wheel', this.customZoomHandler);
     }
     
     if (this.renderer) {

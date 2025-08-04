@@ -92,8 +92,13 @@ const experimentsCard7 = {
   id: 'experiments-card-7',
   content: `<p class="text-lg leading-relaxed" style="font-size: 18px;">Hartline notes that “the basic mechanism of the receptor is one that emphasizes change.” These experiments on single fibers in the optic nerve are early demonstrations of a recurring theme in research on sensory systems.</p>`
 }
+const interactionsCard1 = {
+  id: 'interactions-card-1',
+  content: `<p class="text-lg leading-relaxed" style="font-size: 18px;">Working with multiple ommatidia is more complicated, as the interactions between the receptors must be factored in. Hartline's key discovery was the concept of lateral inhibition, which describes how cells in the retina communicate with each other.</p>`
+}
 
 const activeCardId = ref<string>(limulusCard1.id) // Set an initial active card
+const currentModelPath = ref('/models/horseshoe_crab_basic.glb') // Reactive model path for dynamic switching
 
 interface StoryBlock {
   type: 'sticky-model-group' | 'full-width-sticky-model' | 'text-only-section'
@@ -150,7 +155,7 @@ const storyBlocksGroup1 = ref([
 const storyBlocksGroup2 = ref([
   {
     type: 'full-width-sticky-model',
-    modelPath: '/models/horseshoe_crab_basic.glb',
+    modelPath: '/models/blenderSpike_test.glb',
     items: [
       { 
         type: 'card' as const, 
@@ -181,9 +186,20 @@ const handleCardActivation = (cardId: string) => {
   activeCardId.value = cardId
 }
 
-// Watcher remains useful for triggering future 3D animations or analytics.
+// Watcher for card changes and model switching
 watch(activeCardId, (newId) => {
   console.log(`Active card changed to: ${newId}`)
+  
+  // Switching models
+  if (newId === 'experiments-card-1') {
+    currentModelPath.value = '/models/recordingChamber_hscrab.glb'
+  } else if (newId === 'experiments-card-2') {
+    currentModelPath.value = '/models/electrode_hscrab.glb'
+  } else if (newId === 'limulus-card-1') {
+    // Switch back to basic model if going back to card 1
+    currentModelPath.value = '/models/horseshoe_crab_basic.glb'
+  }
+  
   // Future logic:
   // - Tell the 3D model to change its state/animation.
   // - Send an analytics event.
@@ -224,7 +240,7 @@ watch(activeCardId, (newId) => {
           <div class="model-column-sticky">
             <Shared3DModelViewer
               :container-id="`sticky-model-group1-${index}`"
-              :model-path="block.modelPath!"
+              :model-path="currentModelPath"
               :width="400"
               :height="700"
             />
@@ -266,8 +282,26 @@ watch(activeCardId, (newId) => {
             />
           </div>
         </section>
-
       </div>
+
+      <TwoPaneVisualizationSection
+        section-id="inhibitory-interactions-in-the-retina"
+        :show-model="false"
+        :items="[
+          { 
+            type: 'heading' as const, 
+            id: 'inhibitory-interactions-in-the-retina',
+            text: 'Inhibitory interactions in the retina' 
+          },
+          {
+            type: 'card' as const, 
+            id: 'interactions-card-1', 
+            content: interactionsCard1.content
+          }
+        ]"
+        :active-card-id="activeCardId"
+        @card-activated="handleCardActivation"
+      />
       
       <p class="text-xl text-gray-700 mb-6"style="font-size: 18px">
         <br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
@@ -342,5 +376,6 @@ watch(activeCardId, (newId) => {
   color: #6b7280;
   border-radius: 6px;
   font-size: 14px;
+  margin-right: 6px
 }
 </style>

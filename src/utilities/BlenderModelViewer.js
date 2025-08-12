@@ -29,6 +29,7 @@ class BlenderModelViewer {
       enableControls: true,
       static: false,
       autoRotate: false,
+      modalMode: false,
       background: 0x000000,
       fog: false,
       lights: {
@@ -91,6 +92,10 @@ class BlenderModelViewer {
       this.controls.dampingFactor = 0.05;
       this.controls.autoRotate = this.options.autoRotate;
       this.controls.autoRotateSpeed = 2.0;
+      
+      // Disable default zoom and add custom shift+scroll zoom
+      this.controls.enableZoom = false;
+      this.setupCustomZoom();
     }
     
     // Lighting setup
@@ -737,6 +742,46 @@ class BlenderModelViewer {
     this.renderer.render(this.scene, this.camera);
   }
   
+  setupCustomZoom() {
+    // Detect if this is a modal viewer (fallback detection)
+    const isModalByContainer = this.container.id.includes('modal-');
+    const isModal = this.options.modalMode || isModalByContainer;
+    
+    // Custom zoom handler with modal-aware behavior
+    this.customZoomHandler = (event) => {
+      // Modal viewers: regular scroll zooms, Inline viewers: shift+scroll zooms
+      const shouldZoom = isModal ? true : event.shiftKey;
+      
+      if (shouldZoom) {
+        event.preventDefault();
+        
+        // Get zoom direction (-1 for zoom out, 1 for zoom in)
+        const zoomDirection = event.deltaY > 0 ? -1 : 1;
+        const zoomSpeed = 0.1;
+        
+        // Calculate new camera position based on zoom direction
+        const direction = new THREE.Vector3();
+        this.camera.getWorldDirection(direction);
+        direction.multiplyScalar(zoomDirection * zoomSpeed);
+        
+        // Move camera towards or away from the target
+        const newPosition = this.camera.position.clone().add(direction);
+        
+        // Maintain minimum distance to prevent camera from going through the model
+        const minDistance = 0.5;
+        const target = this.controls ? this.controls.target : new THREE.Vector3(0, 0, 0);
+        const distanceToTarget = newPosition.distanceTo(target);
+        
+        if (distanceToTarget > minDistance) {
+          this.camera.position.copy(newPosition);
+        }
+      }
+    };
+    
+    // Add event listener to the renderer's canvas
+    this.renderer.domElement.addEventListener('wheel', this.customZoomHandler, { passive: false });
+  }
+  
   dispose() {
     // Clean up resources
     if (this.mixer) {
@@ -745,6 +790,11 @@ class BlenderModelViewer {
     
     if (this.controls) {
       this.controls.dispose();
+    }
+    
+    // Remove custom zoom event listener
+    if (this.customZoomHandler) {
+      this.renderer.domElement.removeEventListener('wheel', this.customZoomHandler);
     }
     
     if (this.renderer) {

@@ -78,7 +78,7 @@ function toBlenderColor(rgb: [number, number, number]): [number, number, number]
 }
 
 // Create depth-enhancing gradient texture for scene background
-function createDepthGradientTexture(): THREE.Texture {
+function createDepthGradientTexture(color1, color2): THREE.Texture {
   const canvas = document.createElement('canvas')
   const ctx = canvas.getContext('2d')!
   
@@ -92,8 +92,8 @@ function createDepthGradientTexture(): THREE.Texture {
     canvas.width * 0.5, canvas.height * 0.5, canvas.width * 0.7 // Outer radius
   )
   
-  gradient.addColorStop(0, '#d3ceed')
-  gradient.addColorStop(1, '#5b5773')
+  gradient.addColorStop(0, color1)
+  gradient.addColorStop(1, color2)
   
   // Fill canvas with gradient
   ctx.fillStyle = gradient
@@ -150,8 +150,8 @@ onMounted(async () => {
       background: 0x000000, // Will be replaced with gradient texture
       fog: false,
       lights: {
-        ambient: { color: 0x404040, intensity: 0.3 }, // Reduced ambient for emission materials
-        directional: { color: 0xffffff, intensity: 0.2 } // Reduced directional for emission materials
+        ambient: { color: 0xffffff, intensity: 0.6 }, // Reduced ambient for emission materials
+        directional: { color: 0xffffff, intensity: 0.8 } // Reduced directional for emission materials
       },
       camera: {
         position: { x: -1, y: 14, z: 0}, // Top-down view
@@ -162,7 +162,7 @@ onMounted(async () => {
     })
     
     // Apply depth-enhancing gradient background
-    const gradientTexture = createDepthGradientTexture()
+    const gradientTexture = createDepthGradientTexture('#d3ceed', '#5b5773')
     modelViewer.scene.background = gradientTexture
     
     // Store gradient texture for potential animation
@@ -327,7 +327,7 @@ onMounted(async () => {
     })
     
     // Apply the same gradient background as the banner
-    const contentGradientTexture = createDepthGradientTexture()
+    const contentGradientTexture = createDepthGradientTexture('#ecebf5', '#6c6596')
     contentModelViewer.scene.background = contentGradientTexture
     
     // Store content gradient texture for animation
@@ -404,7 +404,7 @@ watch(isModalOpen, async (newValue) => {
       background: 0x000000, // Will be replaced with gradient
       fog: false,
       lights: {
-        ambient: { color: 0x404040, intensity: 0.4 },
+        ambient: { color: 0xffffff, intensity: 0.6 },
         directional: { color: 0xffffff, intensity: 0.8 }
       },
       camera: {
@@ -416,7 +416,7 @@ watch(isModalOpen, async (newValue) => {
     })
     
     // Apply gradient background
-    const modalGradientTexture = createDepthGradientTexture()
+    const modalGradientTexture = createDepthGradientTexture('#e4e1f2', '#7b6add')
     modalModelViewer.scene.background = modalGradientTexture
     
     // Load model in modal

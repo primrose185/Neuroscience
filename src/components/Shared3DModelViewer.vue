@@ -3,10 +3,21 @@ import { ref, onMounted, onBeforeUnmount, nextTick, provide, inject, computed, w
 import Generic3DModelViewer from '../utilities/Generic3DModelViewer.js'
 import * as THREE from 'three'
 
+interface ViewerOptions {
+  fitCamera?: boolean
+  camera?: {
+    position?: { x: number, y: number, z: number }
+    fov?: number
+    near?: number
+    far?: number
+  }
+  [key: string]: any // Allow other properties
+}
+
 interface Props {
   containerId: string
   modelPath: string
-  viewerOptions?: object
+  viewerOptions?: ViewerOptions
   width?: number | string
   height?: number | string
 }
@@ -62,7 +73,7 @@ const loadModelWithCache = async (modelPath: string) => {
       scale: 1.0,
       position: { x: 0, y: 0, z: 0 },
       autoPlay: false, // We'll manually control animations
-      fitCamera: true
+      fitCamera: props.viewerOptions.fitCamera ?? true
     })
     
     // For models with animations, play animation once
@@ -93,7 +104,7 @@ const loadModelWithCache = async (modelPath: string) => {
       scale: 1.0,
       position: { x: 0, y: 0, z: 0 },
       autoPlay: false, // We'll manually control animations
-      fitCamera: true
+      fitCamera: props.viewerOptions.fitCamera ?? true
     })
     
     // For models with animations, play animation once
@@ -259,14 +270,14 @@ const initializeModalViewer = async () => {
           scale: 1.0,
           position: { x: 0, y: 0, z: 0 },
           autoPlay: false, // We'll manually control animations
-          fitCamera: true
+          fitCamera: props.viewerOptions.fitCamera ?? true
         })
       } else {
         await modalModelViewer.loadModel(props.modelPath, {
           scale: 1.0,
           position: { x: 0, y: 0, z: 0 },
           autoPlay: false, // We'll manually control animations
-          fitCamera: true
+          fitCamera: props.viewerOptions.fitCamera ?? true
         })
       }
       
@@ -303,10 +314,16 @@ onBeforeUnmount(() => {
   }
 })
 
-// Provide the modal functions to parent components if needed
+// Provide the modal functions and viewer access to parent components
 defineExpose({
   openModal,
-  closeModal
+  closeModal,
+  resetCamera: () => {
+    if (localViewer) {
+      localViewer.resetCamera()
+    }
+  },
+  getViewer: () => localViewer
 })
 </script>
 

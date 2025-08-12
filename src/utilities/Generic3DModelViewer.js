@@ -606,6 +606,23 @@ class Generic3DModelViewer {
     });
   }
   
+  resetCamera() {
+    // Reset camera to initial configured position
+    this.camera.position.set(
+      this.options.camera.position.x,
+      this.options.camera.position.y,
+      this.options.camera.position.z
+    );
+    
+    // Update controls target to center if controls exist
+    if (this.controls) {
+      this.controls.target.set(0, 0, 0);
+      this.controls.update();
+    }
+    
+    console.log('Camera reset to:', this.options.camera.position);
+  }
+
   onWindowResize() {
     const width = this.container.clientWidth;
     const height = this.container.clientHeight;

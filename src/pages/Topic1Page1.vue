@@ -100,6 +100,75 @@ const interactionsCard1 = {
 const activeCardId = ref<string>(limulusCard1.id) // Set an initial active card
 const currentModelPath = ref('/models/horseshoe_crab_basic.glb') // Reactive model path for dynamic switching
 
+// Ref to access the 3D model viewer component
+const modelViewerRef = ref(null)
+
+// Model-specific camera configurations
+const modelConfigurations = ref({
+  '/models/horseshoe_crab_basic.glb': {
+    camera: {
+      position: { x: 5, y: 11, z: 4 },
+      fov: 60,
+      near: 0.1,
+      far: 1000
+    },
+    fitCamera: false
+  },
+  '/models/recordingChamber_hscrab.glb': {
+    camera: {
+      position: { x: 12, y: 12, z: 15 },
+      fov: 65,
+      near: 0.1,
+      far: 1000
+    },
+    fitCamera: false
+  },
+  '/models/electrode_hscrab.glb': {
+    camera: {
+      position: { x: 5, y: 3, z: 8 },
+      fov: 70,
+      near: 0.1,
+      far: 1000
+    },
+    fitCamera: false
+  },
+  '/models/eccentric_bipolarblend.glb': {
+    camera: {
+      position: { x: 20, y: 10, z: 25 },
+      fov: 55,
+      near: 0.1,
+      far: 1000
+    },
+    fitCamera: false
+  }
+})
+
+// Computed property for current viewer options based on active model
+const currentViewerOptions = computed(() => {
+  return modelConfigurations.value[currentModelPath.value] || {
+    camera: {
+      position: { x: 5, y: 5, z: 5 },
+      fov: 60,
+      near: 0.1,
+      far: 1000
+    },
+    fitCamera: false
+  }
+})
+
+// Function to get viewer options for any model path
+const getViewerOptionsForModel = (modelPath: string) => {
+  return modelConfigurations.value[modelPath] || {
+    camera: {
+      position: { x: 5, y: 5, z: 5 },
+      fov: 60,
+      near: 0.1,
+      far: 1000
+    },
+    fitCamera: false
+  }
+}
+
 interface StoryBlock {
   type: 'sticky-model-group' | 'full-width-sticky-model' | 'text-only-section'
   modelPath?: string
@@ -155,7 +224,7 @@ const storyBlocksGroup1 = ref([
 const storyBlocksGroup2 = ref([
   {
     type: 'full-width-sticky-model',
-    modelPath: '/models/blenderSpike_test.glb',
+    modelPath: '/models/eccentric_bipolarblend.glb',
     items: [
       { 
         type: 'card' as const, 
@@ -200,6 +269,13 @@ watch(activeCardId, (newId) => {
     currentModelPath.value = '/models/horseshoe_crab_basic.glb'
   }
   
+  // Reset camera position after model change with a small delay
+  setTimeout(() => {
+    if (modelViewerRef.value) {
+      modelViewerRef.value.resetCamera()
+    }
+  }, 500) // 500ms delay to ensure model is loaded
+  
   // Future logic:
   // - Tell the 3D model to change its state/animation.
   // - Send an analytics event.
@@ -239,8 +315,10 @@ watch(activeCardId, (newId) => {
           </div>
           <div class="model-column-sticky">
             <Shared3DModelViewer
+              ref="modelViewerRef"
               :container-id="`sticky-model-group1-${index}`"
               :model-path="currentModelPath"
+              :viewer-options="currentViewerOptions"
               :width="400"
               :height="700"
             />
@@ -268,6 +346,7 @@ watch(activeCardId, (newId) => {
             <Shared3DModelViewer
               :container-id="`full-width-model-group2-${index}`"
               :model-path="block.modelPath!"
+              :viewer-options="getViewerOptionsForModel(block.modelPath!)"
               :width=1000
               :height=200
             />

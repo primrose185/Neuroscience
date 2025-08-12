@@ -171,7 +171,7 @@ const isExpanded = (itemId: string) => {
         </li>
       </ul>
     </div>
-    
+
     <!-- Utilities Section -->
     <div class="sidebar-utilities">
       <div class="utilities-header">

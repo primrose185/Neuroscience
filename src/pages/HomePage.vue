@@ -1,572 +1,223 @@
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, provide } from 'vue'
 import { useRouter } from 'vue-router'
-import SearchBar from '../components/SearchBar.vue'
-import SearchResults from '../components/SearchResults.vue'
-import { getAvailableFilters, getRelatedContent } from '../utilities/searchUtils'
-import type { SearchResult, SearchFilters } from '../types/search'
+import Shared3DModelViewer from '../components/Shared3DModelViewer.vue'
 
 const router = useRouter()
 
-// State
-const searchResults = ref<SearchResult[]>([])
-const searchQuery = ref('')
-const isSearching = ref(false)
-const showResults = ref(false)
-const showRecentlyAdded = ref(false)
-const availableFilters = ref<SearchFilters>({
-  tags: [],
-  categories: [],
-  types: []
-})
+// Model cache setup for 3D viewer
+const sharedModelCache = ref<Map<string, any>>(new Map())
+const setSharedModelCache = (path: string, data: any) => {
+  sharedModelCache.value.set(path, data)
+}
+provide('sharedModelCache', sharedModelCache)
+provide('setSharedModelCache', setSharedModelCache)
 
-// Recently added articles data
-const recentlyAdded = [
-  {
-    id: 'topic1',
-    title: 'Basic Probability',
-    description: 'Introduction to probability theory and mathematical concepts',
-    category: 'Mathematics',
-    path: '/topic1/page1',
-    tags: ['probability', 'mathematics', 'theory'],
-    estimatedTime: '5 min',
-    icon: '📊'
+// Navigate to Platform Guide
+const goToPlatformGuide = () => {
+  router.push('/platform-guide')
+}
+
+// Viewer options for auto-rotating horseshoe crab
+const viewerOptions = {
+  autoRotate: true,
+  enableControls: false,
+  background: 0x1a202c,
+  camera: {
+    position: { x: 8, y: 12, z: 10 },
+    fov: 55,
+    near: 0.1,
+    far: 1000
   },
-  {
-    id: 'topic2',
-    title: 'Neuroscience Fundamentals',
-    description: 'Understanding brain structure and neural mechanisms',
-    category: 'Neuroscience',
-    path: '/topic2/page1',
-    tags: ['neuroscience', 'brain', 'anatomy'],
-    estimatedTime: '10 min',
-    icon: '🧠'
+  lights: {
+    ambient: { color: 0x404040, intensity: 0.6 },
+    directional: { color: 0xffffff, intensity: 0.9 }
   },
-  {
-    id: 'topic3',
-    title: 'Advanced Neural Networks',
-    description: 'Deep dive into neural network behavior and synaptic transmission',
-    category: 'Neuroscience',
-    path: '/topic3',
-    tags: ['neural-networks', 'synapses'],
-    estimatedTime: '15 min',
-    icon: '🔬'
-  },
-  {
-    id: 'topic4',
-    title: 'Statistical Analysis',
-    description: 'Comprehensive guide to statistical methods in research',
-    category: 'Mathematics',
-    path: '/topic4',
-    tags: ['statistics', 'analysis', 'research'],
-    estimatedTime: '12 min',
-    icon: '📈'
-  }
-]
-
-// Platform guide links
-const platformGuideLinks = [
-  { title: 'Getting Started', path: '/platform-guide/getting-started', icon: '🚀' },
-  { title: 'Navigation Guide', path: '/platform-guide/navigation', icon: '🧭' },
-  { title: 'Search Tips', path: '/platform-guide/search', icon: '🔍' },
-  { title: 'Features Overview', path: '/platform-guide/features', icon: '✨' }
-]
-
-// Popular tags
-const popularTags = [
-  'probability',
-  'neuroscience',
-  'mathematics',
-  'brain',
-  'neural-networks',
-  'statistics',
-  'theory',
-  'visualization',
-  'synapses',
-  'anatomy'
-]
-
-// Handle search results
-const handleSearch = (query: string, results: SearchResult[]) => {
-  searchQuery.value = query
-  searchResults.value = results
-  showResults.value = true
-  isSearching.value = false
+  fitCamera: true
 }
-
-// Handle search result selection
-const handleResultSelect = (result: SearchResult) => {
-  // This will be handled by the SearchResults component
-  console.log('Selected result:', result)
-}
-
-// Handle topic click
-const handleTopicClick = (topic: any) => {
-  router.push(topic.path)
-}
-
-// Handle tag click
-const handleTagClick = (tag: string) => {
-  // Focus search and add tag to query
-  searchQuery.value = tag
-  // The SearchBar component will handle the actual search
-}
-
-// Clear search
-const clearSearch = () => {
-  searchQuery.value = ''
-  searchResults.value = []
-  showResults.value = false
-}
-
-// Get difficulty color
-const getDifficultyColor = (difficulty: string) => {
-  switch (difficulty) {
-    case 'beginner':
-      return 'text-green-600 bg-green-50 border-green-200'
-    case 'intermediate':
-      return 'text-yellow-600 bg-yellow-50 border-yellow-200'
-    case 'advanced':
-      return 'text-red-600 bg-red-50 border-red-200'
-    default:
-      return 'text-gray-600 bg-gray-50 border-gray-200'
-  }
-}
-
-// Initialize filters
-onMounted(() => {
-  availableFilters.value = getAvailableFilters()
-})
 </script>
 
 <template>
   <div class="homepage">
-    <!-- Hero Section -->
-    <section class="hero-section">
+    <!-- 3D Model Viewer - Full Viewport Background -->
+    <div class="model-viewer-container">
+      <Shared3DModelViewer
+        container-id="homepage-model-viewer"
+        model-path="/models/horseshoe_crab_basic.glb"
+        :viewer-options="viewerOptions"
+        width="100%"
+        height="100vh"
+      />
+    </div>
+
+    <!-- Hero Overlay Section -->
+    <section class="hero-overlay">
       <div class="hero-content">
         <div class="hero-text">
           <h1 class="hero-title">
             nREM
           </h1>
           <p class="hero-description">
-            Explore interactive content, visualizations, and comprehensive resources 
-            for understanding neuroscience concepts and mathematical foundations.
+            Neuroscience research explained modestly.
           </p>
         </div>
-        
-        <!-- Search Section -->
-        <div class="hero-search">
-          <SearchBar 
-            :placeholder="'Search topics, concepts, or keywords...'"
-            :show-results="true"
-            @search="handleSearch"
-            @select="handleResultSelect"
-            @clear="clearSearch"
-          />
-        </div>
+
+        <!-- Platform Guide Button -->
+        <button class="platform-guide-button" @click="goToPlatformGuide">
+          Platform Guide →
+        </button>
       </div>
     </section>
-
-    <!-- Search Results Section -->
-    <section v-if="showResults" class="search-results-section">
-      <div class="container">
-        <SearchResults 
-          :results="searchResults"
-          :query="searchQuery"
-          :is-loading="isSearching"
-          @result-click="handleResultSelect"
-        />
-      </div>
-    </section>
-
-    <!-- Recently Added Section -->
-    <section v-if="!showResults && showRecentlyAdded" class="recently-added-section">
-      <div class="container">
-        <div class="section-header">
-          <h2 class="section-title">Recently Added</h2>
-          <p class="section-description">
-            Our latest articles and resources
-          </p>
-        </div>
-        
-        <div class="topics-grid">
-          <article
-            v-for="topic in recentlyAdded"
-            :key="topic.id"
-            class="topic-card"
-            @click="handleTopicClick(topic)"
-          >
-            <div class="topic-icon">{{ topic.icon }}</div>
-            <div class="topic-content">
-              <h3 class="topic-title">{{ topic.title }}</h3>
-              <p class="topic-description">{{ topic.description }}</p>
-              
-              <div class="topic-meta">
-                <span class="topic-category">{{ topic.category }}</span>
-                <span class="topic-time">{{ topic.estimatedTime }}</span>
-              </div>
-              
-              <div class="topic-tags">
-                <span
-                  v-for="tag in topic.tags"
-                  :key="tag"
-                  class="topic-tag"
-                  @click.stop="handleTagClick(tag)"
-                >
-                  #{{ tag }}
-                </span>
-              </div>
-            </div>
-          </article>
-        </div>
-      </div>
-    </section>
-
-    <!-- Platform Guide Section -->
-    <section v-if="!showResults" class="platform-guide-section">
-      <div class="container">
-        <div class="section-header">
-          <h2 class="section-title">Platform Guide</h2>
-          <p class="section-description">
-            Learn how to navigate and make the most of this platform
-          </p>
-        </div>
-        
-        <div class="platform-guide-grid">
-          <a
-            v-for="link in platformGuideLinks"
-            :key="link.title"
-            :href="link.path"
-            class="platform-guide-card"
-            @click.prevent="router.push(link.path)"
-          >
-            <div class="platform-guide-icon">{{ link.icon }}</div>
-            <span class="platform-guide-title">{{ link.title }}</span>
-          </a>
-        </div>
-      </div>
-    </section>
-
-    <!-- Popular Tags Section -->
-    <section v-if="!showResults" class="popular-tags-section">
-      <div class="container">
-        <div class="section-header">
-          <h2 class="section-title">Popular Tags</h2>
-          <p class="section-description">
-            Discover content by popular topics and keywords
-          </p>
-        </div>
-        
-        <div class="tags-container">
-          <button
-            v-for="tag in popularTags"
-            :key="tag"
-            class="popular-tag"
-            @click="handleTagClick(tag)"
-          >
-            #{{ tag }}
-          </button>
-        </div>
-      </div>
-    </section>
-
   </div>
 </template>
 
 <style scoped>
 .homepage {
-  min-height: 100vh;
-  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
 }
 
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 24px;
+/* 3D Model Viewer Container */
+.model-viewer-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
 }
 
-/* Reduced margin sections */
-.recently-added-section,
-.platform-guide-section,
-.popular-tags-section {
-  margin: 0 -12px;
+/* Remove border and adjust background for full viewport model */
+.model-viewer-container :deep(.model-3d-container) {
+  border: none;
+  border-radius: 0;
+  background-color: transparent;
+  width: 100%;
+  height: 100%;
 }
 
-@media (min-width: 768px) {
-  .recently-added-section,
-  .platform-guide-section,
-  .popular-tags-section {
-    margin: 0 -24px;
-  }
+/* Hide expand icon on homepage full viewport viewer */
+.model-viewer-container :deep(.expand-icon) {
+  display: none;
 }
 
-/* Hero Section */
-.hero-section {
-  padding: 80px 0 120px;
-  text-align: center;
+/* Hero Overlay Section */
+.hero-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
 }
 
 .hero-content {
   max-width: 800px;
   margin: 0 auto;
   padding: 0 24px;
+  text-align: center;
+  pointer-events: auto;
+}
+
+.hero-text {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(12px);
+  padding: 48px 40px;
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  margin-bottom: 32px;
 }
 
 .hero-title {
-  font-size: 3.5rem;
+  font-size: 4rem;
   font-weight: 800;
   color: #1a202c;
   margin-bottom: 24px;
   line-height: 1.1;
+  text-shadow: 0 2px 10px rgba(255, 255, 255, 0.5);
 }
 
 .hero-description {
   font-size: 1.25rem;
-  color: #4a5568;
-  margin-bottom: 48px;
+  color: #2d3748;
   line-height: 1.6;
+  margin: 0;
 }
 
-.hero-search {
-  max-width: 600px;
-  margin: 0 auto;
-}
-
-/* Search Results Section */
-.search-results-section {
-  padding: 40px 0;
-}
-
-/* Recently Added Section */
-.recently-added-section {
-  padding: 80px 0;
-  background: white;
-}
-
-.section-header {
-  text-align: center;
-  margin-bottom: 48px;
-}
-
-.section-title {
-  font-size: 2.5rem;
-  font-weight: 700;
-  color: #1a202c;
-  margin-bottom: 16px;
-}
-
-.section-description {
-  font-size: 1.1rem;
-  color: #4a5568;
-  max-width: 600px;
-  margin: 0 auto;
-}
-
-.topics-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 24px;
-  margin-top: 48px;
-}
-
-@media (max-width: 768px) {
-  .topics-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-.topic-card {
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 16px;
-  padding: 32px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.topic-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-  border-color: #93c5fd;
-}
-
-.topic-icon {
-  font-size: 3rem;
-  margin-bottom: 16px;
-}
-
-.topic-title {
-  font-size: 1.5rem;
+.platform-guide-button {
+  display: inline-block;
+  padding: 18px 48px;
+  font-size: 1.25rem;
   font-weight: 600;
   color: #1a202c;
-  margin-bottom: 12px;
-}
-
-.topic-description {
-  color: #4a5568;
-  margin-bottom: 16px;
-  line-height: 1.5;
-}
-
-.topic-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
-.topic-category {
-  padding: 4px 12px;
-  background: #edf2f7;
-  color: #4a5568;
-  border-radius: 6px;
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-
-
-.topic-time {
-  padding: 4px 12px;
-  background: #f7fafc;
-  color: #2d3748;
-  border-radius: 6px;
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-
-.topic-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.topic-tag {
-  padding: 4px 8px;
-  background: #f8fafc;
-  color: #4a5568;
-  border-radius: 4px;
-  font-size: 0.75rem;
-  font-weight: 500;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(104, 70, 219, 0.3);
+  border-radius: 16px;
   cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.topic-tag:hover {
-  background: #e2e8f0;
-  color: #2d3748;
-}
-
-/* Platform Guide Section */
-.platform-guide-section {
-  padding: 80px 0;
-  background: #f8fafc;
-}
-
-.platform-guide-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 20px;
-  margin-top: 48px;
-}
-
-.platform-guide-card {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 20px;
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  text-decoration: none;
-  color: #2d3748;
   transition: all 0.3s ease;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+  text-decoration: none;
 }
 
-.platform-guide-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  border-color: #93c5fd;
+.platform-guide-button:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.35);
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(104, 70, 219, 0.6);
 }
 
-.platform-guide-icon {
-  font-size: 1.5rem;
+.platform-guide-button:active {
+  transform: translateY(0) scale(0.98);
 }
-
-.platform-guide-title {
-  font-weight: 500;
-}
-
-/* Popular Tags Section */
-.popular-tags-section {
-  padding: 80px 0;
-  background: white;
-}
-
-.tags-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  justify-content: center;
-  margin-top: 48px;
-}
-
-.popular-tag {
-  padding: 8px 16px;
-  background: #f8fafc;
-  color: #4a5568;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.popular-tag:hover {
-  background: #e2e8f0;
-  color: #2d3748;
-  border-color: #cbd5e0;
-}
-
 
 /* Mobile Responsive */
 @media (max-width: 768px) {
   .hero-title {
-    font-size: 2.5rem;
+    font-size: 2.75rem;
   }
-  
+
   .hero-description {
     font-size: 1.1rem;
   }
-  
-  .section-title {
-    font-size: 2rem;
+
+  .hero-text {
+    padding: 32px 24px;
   }
-  
-  .topic-card {
-    padding: 24px;
-  }
-  
-  .platform-guide-grid {
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+
+  .platform-guide-button {
+    padding: 16px 36px;
+    font-size: 1.1rem;
   }
 }
 
 @media (max-width: 480px) {
-  .hero-section {
-    padding: 60px 0 80px;
-  }
-  
   .hero-title {
-    font-size: 2rem;
+    font-size: 2.25rem;
   }
-  
-  .container {
-    padding: 0 16px;
+
+  .hero-description {
+    font-size: 1rem;
   }
-  
+
   .hero-content {
     padding: 0 16px;
+  }
+
+  .hero-text {
+    padding: 24px 20px;
+    margin-bottom: 24px;
+  }
+
+  .platform-guide-button {
+    padding: 14px 32px;
+    font-size: 1rem;
   }
 }
 </style>

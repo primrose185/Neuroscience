@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, watch, computed, onMounted, defineEmits } from 'vue'
+import { ref, computed, onMounted, defineEmits } from 'vue'
 import TwoPaneVisualizationSection from '../components/TwoPaneVisualizationSection.vue'
-import Shared3DModelViewer from '../components/Shared3DModelViewer.vue'
+import StickyStoryBlocks from '../components/StickyStoryBlocks.vue'
+import type { StoryBlockGroup, CardActivationEvent, StoryItem, HeadingItem } from '../types/stickyStoryBlocks'
 
 const pageMetadata = {
   id: 'topic1-page1',
@@ -26,12 +27,10 @@ if (typeof window !== 'undefined') {
 
 const emit = defineEmits(['update-menu']);
 const pageMenuItems = computed(() => {
-  // Find all headings within both story block groups
-  const headings = [
-    ...storyBlocksGroup1.value.flatMap(block =>
-      (block.items || []).filter(item => item?.type === 'heading')
-    )
-  ];
+  // Find all headings within all story block groups
+  const headings = storyBlocksGroups.value.flatMap((block: StoryBlockGroup) =>
+    (block.items || []).filter((item: StoryItem) => item?.type === 'heading')
+  ) as HeadingItem[];
 
   // The base menu item for the current page
   const mainMenuItem = {
@@ -39,14 +38,14 @@ const pageMenuItems = computed(() => {
     title: pageMetadata.title,
     path: pageMetadata.path,
     // Map the found headings to the format the sidebar expects
-    children: headings.map(heading => ({
+    children: headings.map((heading: HeadingItem) => ({
       id: heading.id,
       title: heading.text,
       // Create the path with a hash for scrolling: /topic1/page1#heading-id
       path: `${pageMetadata.path}#${heading.id}`
     }))
   };
-  
+
   return [mainMenuItem];
 });
 
@@ -97,11 +96,8 @@ const interactionsCard1 = {
   content: `<p class="text-lg leading-relaxed" style="font-size: 18px;">Working with multiple ommatidia is more complicated, as the interactions between the receptors must be factored in. Hartline's key discovery was the concept of lateral inhibition, which describes how cells in the retina communicate with each other.</p>`
 }
 
-const activeCardId = ref<string>(limulusCard1.id) // Set an initial active card
-const currentModelPath = ref('/models/horseshoe_crab_basic.glb') // Reactive model path for dynamic switching
-
-// Ref to access the 3D model viewer component
-const modelViewerRef = ref(null)
+// Active card state for non-sticky sections
+const activeCardId = ref<string>(limulusCard1.id)
 
 // Model-specific camera configurations
 const modelConfigurations = ref({
@@ -143,45 +139,16 @@ const modelConfigurations = ref({
   }
 })
 
-// Computed property for current viewer options based on active model
-const currentViewerOptions = computed(() => {
-  return modelConfigurations.value[currentModelPath.value] || {
-    camera: {
-      position: { x: 5, y: 5, z: 5 },
-      fov: 60,
-      near: 0.1,
-      far: 1000
-    },
-    fitCamera: false
-  }
+// Card to model mapping for dynamic model switching
+const cardToModelMap = ref({
+  'limulus-card-1': '/models/horseshoe_crab_basic.glb',
+  'experiments-card-1': '/models/recordingChamber_hscrab.glb',
+  'experiments-card-2': '/models/electrode_hscrab.glb'
 })
 
-// Function to get viewer options for any model path
-const getViewerOptionsForModel = (modelPath: string) => {
-  return modelConfigurations.value[modelPath] || {
-    camera: {
-      position: { x: 5, y: 5, z: 5 },
-      fov: 60,
-      near: 0.1,
-      far: 1000
-    },
-    fitCamera: false
-  }
-}
-
-interface StoryBlock {
-  type: 'sticky-model-group' | 'full-width-sticky-model' | 'text-only-section'
-  modelPath?: string
-  cards?: Array<{id: string, content: string}>
-  title?: string
-  useSlotContent?: boolean
-  modelWidth?: number
-  modelHeight?: number
-  items?: Array<{type: 'card' | 'heading', id?: string, text?: string, content?: string}>
-}
-
-// First group: Introduction and basic experiments
-const storyBlocksGroup1 = ref([
+// Combined story blocks groups for the sticky component
+const storyBlocksGroups = ref<StoryBlockGroup[]>([
+  // First group: Introduction and basic experiments
   {
     type: 'sticky-model-group',
     modelPath: '/models/horseshoe_crab_basic.glb',
@@ -218,68 +185,52 @@ const storyBlocksGroup1 = ref([
       },
     ]
   },
-]);
-
-// Second group: Advanced experiments with full-width model
-const storyBlocksGroup2 = ref([
+  // Second group: Advanced experiments with full-width model
   {
-    type: 'full-width-sticky-model',
+    type: 'full-width-sticky-model' as const,
     modelPath: '/models/eccentric_bipolarblend.glb',
     items: [
-      { 
-        type: 'card' as const, 
-        id: 'experiments-card-4', 
+      {
+        type: 'card' as const,
+        id: 'experiments-card-3',
+        content: experimentsCard3.content
+      },
+      {
+        type: 'card' as const,
+        id: 'experiments-card-4',
         content: experimentsCard4.content
       },
-      { 
-        type: 'card' as const, 
-        id: 'experiments-card-5', 
+      {
+        type: 'card' as const,
+        id: 'experiments-card-5',
         content: experimentsCard5.content
       },
-      { 
-        type: 'card' as const, 
-        id: 'experiments-card-6', 
+      {
+        type: 'card' as const,
+        id: 'experiments-card-6',
         content: experimentsCard6.content
       },
-      { 
-        type: 'card' as const, 
-        id: 'experiments-card-7', 
+      {
+        type: 'card' as const,
+        id: 'experiments-card-7',
         content: experimentsCard7.content
       },
     ]
-  },
+  }
 ]);
 
-// Change: A single, simplified event handler.
+// Event handler for non-sticky sections
 const handleCardActivation = (cardId: string) => {
   activeCardId.value = cardId
 }
 
-// Watcher for card changes and model switching
-watch(activeCardId, (newId) => {
-  console.log(`Active card changed to: ${newId}`)
-  
-  // Switching models
-  if (newId === 'experiments-card-1') {
-    currentModelPath.value = '/models/recordingChamber_hscrab.glb'
-  } else if (newId === 'experiments-card-2') {
-    currentModelPath.value = '/models/electrode_hscrab.glb'
-  } else if (newId === 'limulus-card-1') {
-    // Switch back to basic model if going back to card 1
-    currentModelPath.value = '/models/horseshoe_crab_basic.glb'
-  }
-  
-  // Reset camera position after model change with a small delay
-  setTimeout(() => {
-    if (modelViewerRef.value) {
-      modelViewerRef.value.resetCamera()
-    }
-  }, 500) // 500ms delay to ensure model is loaded
-  
+// Event handler for sticky story blocks
+const handleStickyCardActivation = (event: CardActivationEvent) => {
+  console.log('Sticky card activated:', event)
   // Future logic:
   // - Tell the 3D model to change its state/animation.
   // - Send an analytics event.
-})
+}
 
 </script>
 
@@ -301,68 +252,16 @@ watch(activeCardId, (newId) => {
         The Nobel Prize in Physiology or Medicine in 1967 was awarded jointly to Haldan Keffer Hartline, Ragnar Granit, and George Wald for their discoveries concerning visual processes. In his Nobel Lecture, Hartline explains his work on the concept of lateral inhibition, a defining characteristic of retinal interactions that demonstrates the importance of contrast in visual processing.
       </p>
       
-      <!-- First story block group: Introduction and basic experiments -->
-      <div v-for="(block, index) in storyBlocksGroup1" :key="`group1-${index}`">
-        <section v-if="block.type === 'sticky-model-group'" class="sticky-group-container">
-          <div class="cards-column">
-            <TwoPaneVisualizationSection
-              :section-id="`group1-${index}`"
-              :show-model="false"
-              :items="block.items"
-              :active-card-id="activeCardId"
-              @card-activated="handleCardActivation"
-            />
-          </div>
-          <div class="model-column-sticky">
-            <Shared3DModelViewer
-              ref="modelViewerRef"
-              :container-id="`sticky-model-group1-${index}`"
-              :model-path="currentModelPath"
-              :viewer-options="currentViewerOptions"
-              :width="400"
-              :height="700"
-            />
-          </div>
-        </section>
-      </div>
-
-      <!-- Transition section: experimentsCard3 -->
-      <TwoPaneVisualizationSection
-        section-id="experiments-part-3"
-        :show-model="false"
-        :items="[{ 
-          type: 'card', 
-          id: experimentsCard3.id, 
-          content: experimentsCard3.content 
-        }]"
-        :active-card-id="activeCardId"
-        @card-activated="handleCardActivation"
+      <!-- Sticky story blocks component -->
+      <StickyStoryBlocks
+        :groups="storyBlocksGroups"
+        :card-to-model-map="cardToModelMap"
+        :model-configurations="modelConfigurations"
+        :initial-active-card-id="limulusCard1.id"
+        @card-activated="handleStickyCardActivation"
       />
 
-      <!-- Second story block group: Advanced experiments with full-width model -->
-      <div v-for="(block, index) in storyBlocksGroup2" :key="`group2-${index}`">
-        <section v-if="block.type === 'full-width-sticky-model'" class="full-width-sticky-container">
-          <div class="full-width-model-sticky">
-            <Shared3DModelViewer
-              :container-id="`full-width-model-group2-${index}`"
-              :model-path="block.modelPath!"
-              :viewer-options="getViewerOptionsForModel(block.modelPath!)"
-              :width=1000
-              :height=200
-            />
-          </div>
-          <div class="full-width-cards-column">
-            <TwoPaneVisualizationSection
-              :section-id="`full-width-group2-${index}`"
-              :show-model="false"
-              :items="block.items"
-              :active-card-id="activeCardId"
-              @card-activated="handleCardActivation"
-            />
-          </div>
-        </section>
-      </div>
-
+      <!-- Non-sticky section: Inhibitory interactions -->
       <TwoPaneVisualizationSection
         section-id="inhibitory-interactions-in-the-retina"
         :show-model="false"
@@ -391,63 +290,6 @@ watch(activeCardId, (newId) => {
 </template>
 
 <style scoped>
-/* Change: Added new styles for the sticky layout */
-.sticky-group-container {
-  display: flex;
-  gap: 2rem;
-  align-items: flex-start;
-}
-
-.cards-column {
-  flex: 1;
-  min-width: 0;
-}
-
-.model-column-sticky {
-  flex: 1;
-  position: sticky;
-  top: 2rem;
-  height: calc(100vh - 4rem);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-@media (max-width: 768px) {
-  .sticky-group-container {
-    flex-direction: column;
-  }
-  .model-column-sticky {
-    width: 100%;
-    height: 50vh;
-    position: sticky;
-    top: 1rem;
-  }
-}
-
-/* Full-width sticky model layout */
-.full-width-sticky-container {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  margin: 0rem 0;
-}
-
-.full-width-model-sticky {
-  width: 100%;
-  top: 1rem;
-  position: sticky;
-  background: white;
-  margin-bottom: 1rem;
-  z-index: 10;
-  padding: 1rem;
-}
-
-.full-width-cards-column {
-  width: 100%;
-  padding-top: 1rem;
-}
-
 .tag-chip {
   display: inline-block;
   padding: 6px 12px;

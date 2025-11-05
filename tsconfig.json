@@ -9,6 +9,5 @@
     "paths": {
       "@/*": ["src/*"]
     }
-  },
-  "include": ["src", "src/lib/three-stl-loader.d.ts"]
+  }
 }

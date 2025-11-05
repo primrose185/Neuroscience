@@ -21,6 +21,7 @@ interface Props {
   showModel?: boolean
   viewerOptions?: object
   activeCardId?: string
+  observerRootMargin?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -28,7 +29,8 @@ const props = withDefaults(defineProps<Props>(), {
   modelPath: "/models/horseshoe_crab_basic.glb",
   showModel: false,
   viewerOptions: () => ({}),
-  activeCardId: ''
+  activeCardId: '',
+  observerRootMargin: '-20% 0px -20% 0px'
 })
 
 const emit = defineEmits<{
@@ -42,31 +44,47 @@ const activateCard = (card: CardItem, index: number) => {
 const cardRefs = ref<HTMLElement[]>([])
 const usingItemsProp = computed(() => props.items && props.items.length > 0)
 
+// Cooldown mechanism to prevent rapid-fire activations
+const lastActivationTime = ref<number>(0)
+const ACTIVATION_COOLDOWN = 150 // milliseconds
+
 const setupCardObserver = () => {
   if (!usingItemsProp.value || cardRefs.value.length === 0) return
-  
+
   const observerOptions = {
     root: null,
-    rootMargin: '-10% 0px -10% 0px',
-    threshold: 0.4
+    rootMargin: props.observerRootMargin, // Use prop for flexible detection zone
+    threshold: 0.5 // Higher threshold requires more visibility (50%)
   }
-  
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach((entry) => {
-      if (entry.isIntersecting) {
-        const cardElement = entry.target as HTMLElement
-        // Find the original item index based on the element's ref
-        const itemIndex = cardRefs.value.findIndex(ref => ref === cardElement)
-        if (itemIndex === -1) return
 
-        const item = props.items![itemIndex]
-        
-        // Only proceed if the item is a card and not already active
-        if (item.type === 'card' && item.id !== props.activeCardId) {
-          emit('cardActivated', item.id, itemIndex)
-        }
-      }
-    })
+  const observer = new IntersectionObserver((entries) => {
+    // Sort entries by intersection ratio (highest first) to prioritize most visible card
+    const sortedEntries = entries
+      .filter(entry => entry.isIntersecting)
+      .sort((a, b) => b.intersectionRatio - a.intersectionRatio)
+
+    // Only process the most visible card
+    const topEntry = sortedEntries[0]
+    if (!topEntry) return
+
+    // Check cooldown period
+    const now = Date.now()
+    if (now - lastActivationTime.value < ACTIVATION_COOLDOWN) {
+      return
+    }
+
+    const cardElement = topEntry.target as HTMLElement
+    // Find the original item index based on the element's ref
+    const itemIndex = cardRefs.value.findIndex(ref => ref === cardElement)
+    if (itemIndex === -1) return
+
+    const item = props.items![itemIndex]
+
+    // Only proceed if the item is a card and not already active
+    if (item.type === 'card' && item.id !== props.activeCardId) {
+      lastActivationTime.value = now
+      emit('cardActivated', item.id, itemIndex)
+    }
   }, observerOptions)
   
   // Observe all card elements (refs for headings will be null)
@@ -77,18 +95,17 @@ const setupCardObserver = () => {
   return observer
 }
 
+let cardObserver: IntersectionObserver | undefined
+
 onMounted(async () => {
-  let cardObserver: IntersectionObserver | null = null
   if (usingItemsProp.value) {
     await nextTick()
     cardObserver = setupCardObserver()
   }
-  
-  onBeforeUnmount(() => {
-    if (cardObserver) {
-      cardObserver.disconnect()
-    }
-  })
+})
+
+onBeforeUnmount(() => {
+  cardObserver?.disconnect()
 })
 </script>
 
@@ -173,7 +190,7 @@ onMounted(async () => {
 
 .reading-card.active {
   background-color: #f8f9fa;
-  border-left: 3px solid #3b82f6;
+  border-left: 3px solid #6846db;
   color: #1f2937;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   transform: translateX(4px);

@@ -82,4 +82,3 @@ ENV/
 logs/
 *.pid
 data/
-public/models/

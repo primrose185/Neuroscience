@@ -5,7 +5,7 @@
       "src": "package.json",
       "use": "@vercel/static-build",
       "config": { 
-        "buildCommand": "git lfs install && git lfs pull && yarn build",
+        "buildCommand": "git lfs install && git lfs pull && git lfs ls-files && echo 'lfs pull done' && yarn build",
         "distDir": "dist" 
       }
     }

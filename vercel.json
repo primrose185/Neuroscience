@@ -4,7 +4,10 @@
     {
       "src": "package.json",
       "use": "@vercel/static-build",
-      "config": { "distDir": "dist" }
+      "config": { 
+        "buildCommand": "git lfs install && git lfs pull && yarn build",
+        "distDir": "dist" 
+      }
     }
   ],
   "routes": [

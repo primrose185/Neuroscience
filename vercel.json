@@ -1,15 +1,7 @@
 {
-  "version": 2,
-  "builds": [
-    {
-      "src": "package.json",
-      "use": "@vercel/static-build",
-      "config": { 
-        "buildCommand": "git lfs install && git lfs pull && yarn build",
-        "distDir": "dist" 
-      }
-    }
-  ],
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "git lfs install && (git remote set-url origin https://github.com/primrose185/Neuroscience.git 2>/dev/null || git remote add origin https://github.com/primrose185/Neuroscience.git) && git lfs pull && git lfs ls-files -s && echo 'lfs pull done' && yarn build",
+  "outputDirectory": "dist",
   "routes": [
     {
       "src": "/assets/(.*)",

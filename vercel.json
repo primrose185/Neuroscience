@@ -1,15 +1,5 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "git lfs install && git lfs pull && git lfs ls-files && echo 'lfs pull done' && yarn build",
-  "builds": [
-    {
-      "src": "package.json",
-      "use": "@vercel/static-build",
-      "config": { 
-        "distDir": "dist" 
-      }
-    }
-  ],
   "routes": [
     {
       "src": "/assets/(.*)",

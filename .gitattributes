@@ -1,2 +1,6 @@
-models/** filter=lfs diff=lfs merge=lfs -text
-public/models/** filter=lfs diff=lfs merge=lfs -text
+models/**.glb filter=lfs diff=lfs merge=lfs -binary
+models/**.json filter=lfs diff=lfs merge=lfs -text
+models/**.swc filter=lfs diff=lfs merge=lfs -text
+public/models/**.glb filter=lfs diff=lfs merge=lfs -binary
+public/models/**.json filter=lfs diff=lfs merge=lfs -text
+public/models/**.swc filter=lfs diff=lfs merge=lfs -text

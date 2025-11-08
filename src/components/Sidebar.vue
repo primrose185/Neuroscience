@@ -248,7 +248,7 @@ const isExpanded = (itemId: string) => {
 }
 
 .home-logo {
-  height: 24px;
+  height: 66px;
   width: auto;
   display: block;
 }

@@ -54,7 +54,7 @@ const menuItems: MenuItem[] = [
   },
   {
     id: 'topic2',
-    title: 'Topic 2',
+    title: 'Two Ommatidia Lateral Inhibition Simulation',
     path: '/topic2',
     children: [
       {
@@ -78,11 +78,6 @@ const menuItems: MenuItem[] = [
         path: '/topic2#computational-neuroscience'
       }
     ]
-  },
-  {
-    id: 'topic3',
-    title: 'Topic 3',
-    path: '/topic3'
   }
 ]
 

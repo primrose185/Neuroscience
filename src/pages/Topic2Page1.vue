@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue'
+import { onMounted, onUnmounted, ref, computed } from 'vue'
 import BlenderModelViewer from '../utilities/BlenderModelViewer.js'
 import * as THREE from 'three'
 
@@ -64,6 +64,34 @@ const animationSpeed = ref(0.5)
 const currentTime = ref(0)
 const totalTime = ref(200) // 200ms simulation duration
 
+// View mode state
+const viewMode = ref<'two' | 'single'>('two') // Default to two ommatidia
+
+// Model and data paths based on view mode
+const modelPath = computed(() =>
+  viewMode.value === 'two'
+    ? '/models/two_ommatidia.glb'
+    : '/models/one_ommatidia.glb'
+)
+
+const dataPath = computed(() =>
+  viewMode.value === 'two'
+    ? '/data/voltages_formatted.json'
+    : '/data/voltages_formatted_single.json'
+)
+
+const pageTitle = computed(() =>
+  viewMode.value === 'two'
+    ? 'Two Ommatidia: Lateral Inhibition'
+    : 'Single Ommatidium: Voltage Response'
+)
+
+const pageSubtitle = computed(() =>
+  viewMode.value === 'two'
+    ? 'NEURON simulation of coupled eccentric cells with light stimulation'
+    : 'NEURON simulation of single eccentric cell response to light'
+)
+
 // Initialize viewer
 onMounted(async () => {
   try {
@@ -88,9 +116,9 @@ onMounted(async () => {
       viewer.controls.maxDistance = 200  // Prevent zooming too far
     }
 
-    console.log('Loading two_ommatidia.glb model...')
+    console.log(`Loading ${modelPath.value} model...`)
     // Load the 3D model
-    await viewer.loadModel('/models/two_ommatidia.glb', {
+    await viewer.loadModel(modelPath.value, {
       scale: 1.0,
       position: { x: 0, y: 0, z: 0 },
       fitCamera: true
@@ -106,9 +134,9 @@ onMounted(async () => {
     )
     viewer.scene.background = gradientTexture
 
-    console.log('Loading voltage data...')
+    console.log(`Loading voltage data from ${dataPath.value}...`)
     // Load voltage simulation data
-    await viewer.loadVoltageData('/data/voltages_formatted.json')
+    await viewer.loadVoltageData(dataPath.value)
 
     console.log('Starting voltage animation...')
     // Start animation
@@ -166,6 +194,52 @@ const restart = () => {
   viewer.playVoltageAnimation(animationSpeed.value)
   isPlaying.value = true
 }
+
+// View mode switching
+const switchViewMode = async (mode: 'two' | 'single') => {
+  if (!viewer || viewMode.value === mode) return
+
+  try {
+    // Stop current animation
+    viewer.stopVoltageAnimation()
+    isPlaying.value = false
+
+    // Remove current model from scene
+    if (viewer.currentModel) {
+      viewer.scene.remove(viewer.currentModel)
+      viewer.currentModel = null
+    }
+
+    // Update mode
+    viewMode.value = mode
+
+    console.log(`Switching to ${mode} mode...`)
+    console.log(`Loading ${modelPath.value} model...`)
+
+    // Load new model
+    await viewer.loadModel(modelPath.value, {
+      scale: 1.0,
+      position: { x: 0, y: 0, z: 0 },
+      fitCamera: true
+    })
+
+    console.log(`Loading voltage data from ${dataPath.value}...`)
+
+    // Load new voltage data
+    await viewer.loadVoltageData(dataPath.value)
+
+    // Restart animation
+    viewer.playVoltageAnimation(animationSpeed.value)
+    isPlaying.value = true
+
+    console.log(`Successfully switched to ${mode} mode`)
+  } catch (error) {
+    console.error('Error switching view mode:', error)
+  }
+}
+
+const switchToTwoOmmatidia = () => switchViewMode('two')
+const switchToSingleOmmatidium = () => switchViewMode('single')
 </script>
 
 <template>
@@ -186,6 +260,23 @@ const restart = () => {
         <button @click="restart" class="control-button" aria-label="Restart">
           ⟲
         </button>
+
+        <!-- View Mode Toggle -->
+        <div class="view-mode-controls">
+          <span class="control-label">View:</span>
+          <button
+            @click="switchToTwoOmmatidia"
+            :class="['mode-button', { active: viewMode === 'two' }]"
+          >
+            Two Cells
+          </button>
+          <button
+            @click="switchToSingleOmmatidium"
+            :class="['mode-button', { active: viewMode === 'single' }]"
+          >
+            Single Cell
+          </button>
+        </div>
 
         <!-- Speed Controls -->
         <div class="speed-controls">
@@ -226,8 +317,8 @@ const restart = () => {
 
     <!-- Info Overlay (top) -->
     <div class="info-overlay">
-      <h1 class="title">Two Ommatidia: Lateral Inhibition</h1>
-      <p class="subtitle">NEURON simulation of coupled eccentric cells with light stimulation</p>
+      <h1 class="title">{{ pageTitle }}</h1>
+      <p class="subtitle">{{ pageSubtitle }}</p>
     </div>
   </div>
 </template>
@@ -249,7 +340,7 @@ const restart = () => {
   left: calc(280px + 2rem);  /* Account for sidebar width + margin */
   right: 2rem;
   bottom: 2rem;
-  width: calc(100vw - 280px - 4rem);  /* Adjust width for sidebar */
+  width: calc(80vw - 280px - 4rem);  /* Adjust width for sidebar */
   height: calc(100vh - 4rem);
   border-radius: 8px;
   overflow: hidden;
@@ -330,6 +421,36 @@ const restart = () => {
 
 .control-button:active {
   transform: scale(0.95);
+}
+
+.view-mode-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-right: 1rem;
+  border-right: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.mode-button {
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mode-button:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+}
+
+.mode-button.active {
+  background: rgba(147, 51, 234, 0.5);
+  border-color: rgba(168, 85, 247, 0.8);
+  color: #fff;
 }
 
 .speed-controls {
@@ -422,10 +543,13 @@ const restart = () => {
     gap: 0.5rem;
   }
 
+  .view-mode-controls,
   .speed-controls,
   .time-display {
     border-left: none;
+    border-right: none;
     padding-left: 0;
+    padding-right: 0;
   }
 }
 </style>

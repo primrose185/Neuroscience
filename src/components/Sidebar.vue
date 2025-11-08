@@ -101,11 +101,11 @@ const isExpanded = (itemId: string) => {
   <nav :class="['sidebar', isOpen ? 'open' : '']">
     <!-- Home Button -->
     <div class="sidebar-header">
-      <button 
-        @click="handleHomeClick" 
+      <button
+        @click="handleHomeClick"
         class="home-button"
       >
-        Home
+        <img src="/black.png" alt="Home" class="home-logo" />
       </button>
     </div>
     
@@ -234,20 +234,23 @@ const isExpanded = (itemId: string) => {
 }
 
 .home-button {
-  font-size: 18px;
-  font-weight: 600;
-  color: #111827;
   background: none;
   border: none;
   cursor: pointer;
   padding: 0;
   text-align: left;
   width: 100%;
-  transition: color 0.15s ease;
+  transition: opacity 0.15s ease;
 }
 
 .home-button:hover {
-  color: #6b7280;
+  opacity: 0.7;
+}
+
+.home-logo {
+  height: 66px;
+  width: auto;
+  display: block;
 }
 
 .sidebar-content {

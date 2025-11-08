@@ -142,7 +142,7 @@ const viewerOptions = {
 }
 
 .hero-logo {
-  height: 4rem;
+  height: 25rem;
   width: auto;
   display: block;
   filter: drop-shadow(0 2px 10px rgba(255, 255, 255, 0.5));
@@ -185,7 +185,7 @@ const viewerOptions = {
 /* Mobile Responsive */
 @media (max-width: 768px) {
   .hero-logo {
-    height: 2.75rem;
+    height: 5.5rem;
   }
 
   .hero-description {
@@ -204,7 +204,7 @@ const viewerOptions = {
 
 @media (max-width: 480px) {
   .hero-logo {
-    height: 2.25rem;
+    height: 4.5rem;
   }
 
   .hero-description {

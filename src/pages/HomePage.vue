@@ -54,9 +54,9 @@ const viewerOptions = {
     <section class="hero-overlay">
       <div class="hero-content">
         <div class="hero-text">
-          <h1 class="hero-title">
-            nREM
-          </h1>
+          <div class="hero-title">
+            <img src="/white.png" alt="nREM" class="hero-logo" />
+          </div>
           <p class="hero-description">
             Neuroscience research explained modestly.
           </p>
@@ -135,12 +135,17 @@ const viewerOptions = {
 }
 
 .hero-title {
-  font-size: 4rem;
-  font-weight: 800;
-  color: #1a202c;
   margin-bottom: 24px;
-  line-height: 1.1;
-  text-shadow: 0 2px 10px rgba(255, 255, 255, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.hero-logo {
+  height: 25rem;
+  width: auto;
+  display: block;
+  filter: drop-shadow(0 2px 10px rgba(255, 255, 255, 0.5));
 }
 
 .hero-description {
@@ -179,8 +184,8 @@ const viewerOptions = {
 
 /* Mobile Responsive */
 @media (max-width: 768px) {
-  .hero-title {
-    font-size: 2.75rem;
+  .hero-logo {
+    height: 5.5rem;
   }
 
   .hero-description {
@@ -198,8 +203,8 @@ const viewerOptions = {
 }
 
 @media (max-width: 480px) {
-  .hero-title {
-    font-size: 2.25rem;
+  .hero-logo {
+    height: 4.5rem;
   }
 
   .hero-description {

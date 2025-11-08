@@ -4,7 +4,6 @@ import HowToUsePage from '../pages/HowToUsePage.vue'
 import GlossaryPage from '../pages/GlossaryPage.vue'
 import Topic1Page1 from '../pages/Topic1Page1.vue'
 import Topic2Page1 from '../pages/Topic2Page1.vue'
-import Topic3Page from '../pages/Topic3Page.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -38,11 +37,6 @@ const router = createRouter({
       path: '/topic2',
       name: 'topic2',
       component: Topic2Page1
-    },
-    {
-      path: '/topic3',
-      name: 'topic3',
-      component: Topic3Page
     }
   ]
 })

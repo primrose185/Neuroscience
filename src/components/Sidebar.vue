@@ -5,6 +5,9 @@ import SearchBar from './SearchBar.vue'
 import GoogleSearchBar from './GoogleSearchBar.vue'
 import type { SearchResult } from '../types/search'
 
+// Check if Google Search is enabled via environment variable
+const isGoogleSearchEnabled = import.meta.env.VITE_ENABLE_GOOGLE_SEARCH === 'true'
+
 // Search mode: 'local' or 'google'
 const searchMode = ref<'local' | 'google'>('local')
 
@@ -167,8 +170,8 @@ const isExpanded = (itemId: string) => {
 
     <!-- Search Section (above Utilities) -->
     <div class="sidebar-search">
-      <!-- Search Mode Toggle -->
-      <div class="search-mode-toggle">
+      <!-- Search Mode Toggle (only show if Google Search is enabled) -->
+      <div v-if="isGoogleSearchEnabled" class="search-mode-toggle">
         <button
           :class="['mode-button', { active: searchMode === 'local' }]"
           @click="searchMode = 'local'"
@@ -196,8 +199,8 @@ const isExpanded = (itemId: string) => {
         />
       </div>
 
-      <!-- Google Search -->
-      <div v-show="searchMode === 'google'" class="search-container">
+      <!-- Google Search (only show if enabled) -->
+      <div v-if="isGoogleSearchEnabled" v-show="searchMode === 'google'" class="search-container">
         <GoogleSearchBar />
       </div>
     </div>

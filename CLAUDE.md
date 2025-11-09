@@ -79,15 +79,22 @@ This is a frontend-only Vue 3 application focused on neuroscience education with
 - **Component Scoping**: Scoped styles in Vue components with global utilities
 
 ### Search System
-- **Search Engine**: Fuse.js for fuzzy search with weighted scoring
-- **Search Index**: Auto-generated from page metadata using `scripts/generate-search-index.js`
-- **Index Location**: `src/utilities/searchUtils.ts` (auto-generated, do not edit manually)
-- **Search Weights**: Title (40%), Content (30%), Tags (20%), Category (10%)
-- **Update Process**:
-  - Automatically regenerated during `yarn build`
-  - Manually run with `yarn generate-search-index`
-  - Pages must include `pageMetadata` object to be searchable
-- **Documentation**: See `scripts/README.md` for detailed information
+- **Dual Search Options**: Users can toggle between Local Search and Google Search
+- **Local Search**:
+  - Engine: Fuse.js for fuzzy search with weighted scoring
+  - Search Index: Auto-generated from page metadata using `scripts/generate-search-index.js`
+  - Index Location: `src/utilities/searchUtils.ts` (auto-generated, do not edit manually)
+  - Search Weights: Title (40%), Content (30%), Tags (20%), Category (10%)
+  - Update Process:
+    - Automatically regenerated during `yarn build`
+    - Manually run with `yarn generate-search-index`
+    - Pages must include `pageMetadata` object to be searchable
+  - Documentation: See `scripts/README.md` for detailed information
+- **Google Search**:
+  - Embedded Google Programmable Search Engine
+  - Requires Search Engine ID in environment variables
+  - Setup: See `GOOGLE_SEARCH_SETUP.md` for configuration instructions
+  - Configuration: Set `VITE_GOOGLE_SEARCH_ENGINE_ID` in `.env.local`
 
 ### Adding New Content Pages
 

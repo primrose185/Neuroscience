@@ -2,7 +2,11 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import SearchBar from './SearchBar.vue'
+import GoogleSearchBar from './GoogleSearchBar.vue'
 import type { SearchResult } from '../types/search'
+
+// Search mode: 'local' or 'google'
+const searchMode = ref<'local' | 'google'>('local')
 
 interface MenuItem {
   id: string
@@ -111,13 +115,39 @@ const isExpanded = (itemId: string) => {
     
     <!-- Search Section -->
     <div class="sidebar-search">
-      <SearchBar
-        placeholder="Search topics..."
-        :compact="true"
-        :max-results="5"
-        @search="handleSearch"
-        @select="handleSearchSelect"
-      />
+      <!-- Search Mode Toggle -->
+      <div class="search-mode-toggle">
+        <button
+          :class="['mode-button', { active: searchMode === 'local' }]"
+          @click="searchMode = 'local'"
+          title="Search within this site"
+        >
+          📚 Local
+        </button>
+        <button
+          :class="['mode-button', { active: searchMode === 'google' }]"
+          @click="searchMode = 'google'"
+          title="Search with Google"
+        >
+          🔍 Google
+        </button>
+      </div>
+
+      <!-- Local Search -->
+      <div v-show="searchMode === 'local'" class="search-container">
+        <SearchBar
+          placeholder="Search topics..."
+          :compact="true"
+          :max-results="5"
+          @search="handleSearch"
+          @select="handleSearchSelect"
+        />
+      </div>
+
+      <!-- Google Search -->
+      <div v-show="searchMode === 'google'" class="search-container">
+        <GoogleSearchBar />
+      </div>
     </div>
     
     <!-- Navigation Menu -->
@@ -402,6 +432,45 @@ const isExpanded = (itemId: string) => {
   padding: 16px 24px;
   border-bottom: 1px solid #f3f4f6;
   flex-shrink: 0;
+}
+
+/* Search Mode Toggle */
+.search-mode-toggle {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  background-color: #f3f4f6;
+  padding: 0.25rem;
+  border-radius: 8px;
+}
+
+.mode-button {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #6b7280;
+  background-color: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.mode-button:hover {
+  color: #374151;
+  background-color: rgba(255, 255, 255, 0.5);
+}
+
+.mode-button.active {
+  color: #1f2937;
+  background-color: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.search-container {
+  width: 100%;
 }
 
 /* Utilities Section */

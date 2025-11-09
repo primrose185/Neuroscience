@@ -112,8 +112,60 @@ const isExpanded = (itemId: string) => {
         <img src="/black.png" alt="Home" class="home-logo" />
       </button>
     </div>
-    
-    <!-- Search Section -->
+
+    <!-- Navigation Menu -->
+    <div class="sidebar-content">
+      <ul class="sidebar-menu">
+        <li v-for="item in menuItems" :key="item.id" class="menu-item">
+          <!-- Main menu item -->
+          <div
+            class="menu-item-content"
+            :class="{ 'has-children': item.children?.length }"
+            @click="handleMenuClick(item)"
+          >
+            <span class="menu-item-title">{{ item.title }}</span>
+            <svg
+              v-if="item.children?.length"
+              class="expand-icon"
+              :class="{ 'expanded': isExpanded(item.id) }"
+              width="12"
+              height="12"
+              viewBox="0 0 12 12"
+              fill="none"
+            >
+              <path
+                d="M4.5 3L7.5 6L4.5 9"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </div>
+
+          <!-- Submenu -->
+          <ul
+            v-if="item.children?.length && isExpanded(item.id)"
+            class="submenu"
+          >
+            <li
+              v-for="child in item.children"
+              :key="child.id"
+              class="submenu-item"
+            >
+              <div
+                class="submenu-item-content"
+                @click="handleMenuClick(child)"
+              >
+                {{ child.title }}
+              </div>
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Search Section (above Utilities) -->
     <div class="sidebar-search">
       <!-- Search Mode Toggle -->
       <div class="search-mode-toggle">
@@ -148,58 +200,6 @@ const isExpanded = (itemId: string) => {
       <div v-show="searchMode === 'google'" class="search-container">
         <GoogleSearchBar />
       </div>
-    </div>
-    
-    <!-- Navigation Menu -->
-    <div class="sidebar-content">
-      <ul class="sidebar-menu">
-        <li v-for="item in menuItems" :key="item.id" class="menu-item">
-          <!-- Main menu item -->
-          <div 
-            class="menu-item-content"
-            :class="{ 'has-children': item.children?.length }"
-            @click="handleMenuClick(item)"
-          >
-            <span class="menu-item-title">{{ item.title }}</span>
-            <svg 
-              v-if="item.children?.length" 
-              class="expand-icon"
-              :class="{ 'expanded': isExpanded(item.id) }"
-              width="12" 
-              height="12" 
-              viewBox="0 0 12 12" 
-              fill="none"
-            >
-              <path 
-                d="M4.5 3L7.5 6L4.5 9" 
-                stroke="currentColor" 
-                stroke-width="1.5" 
-                stroke-linecap="round" 
-                stroke-linejoin="round"
-              />
-            </svg>
-          </div>
-          
-          <!-- Submenu -->
-          <ul 
-            v-if="item.children?.length && isExpanded(item.id)" 
-            class="submenu"
-          >
-            <li 
-              v-for="child in item.children" 
-              :key="child.id"
-              class="submenu-item"
-            >
-              <div 
-                class="submenu-item-content"
-                @click="handleMenuClick(child)"
-              >
-                {{ child.title }}
-              </div>
-            </li>
-          </ul>
-        </li>
-      </ul>
     </div>
 
     <!-- Utilities Section -->
@@ -430,8 +430,10 @@ const isExpanded = (itemId: string) => {
 
 .sidebar-search {
   padding: 16px 24px;
+  border-top: 1px solid #f3f4f6;
   border-bottom: 1px solid #f3f4f6;
   flex-shrink: 0;
+  margin-top: auto;
 }
 
 /* Search Mode Toggle */
@@ -475,8 +477,6 @@ const isExpanded = (itemId: string) => {
 
 /* Utilities Section */
 .sidebar-utilities {
-  border-top: 1px solid #f3f4f6;
-  margin-top: auto;
   flex-shrink: 0;
 }
 

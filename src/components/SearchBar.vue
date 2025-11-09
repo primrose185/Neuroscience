@@ -12,7 +12,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  placeholder: 'Search topics, concepts, or keywords...',
+  placeholder: 'Search using local index...',
   showResults: true,
   maxResults: 8,
   compact: false
@@ -42,8 +42,8 @@ const hasSuggestions = computed(() => suggestions.value.length > 0)
 const showSuggestions = computed(() => query.value.length > 0 && query.value.length < 3 && hasSuggestions.value)
 const showSearchResults = computed(() => query.value.length >= 3 && hasResults.value)
 
-// Perform search with debouncing
-const debouncedSearch = debounce(async (searchQuery: string) => {
+// Perform search immediately (for button click)
+const performImmediateSearch = async (searchQuery: string) => {
   if (searchQuery.length < 3) {
     results.value = []
     suggestions.value = getSearchSuggestions(searchQuery, 5)
@@ -52,17 +52,17 @@ const debouncedSearch = debounce(async (searchQuery: string) => {
   }
 
   isLoading.value = true
-  
+
   try {
     const searchOptions: SearchOptions = {
       query: searchQuery,
       maxResults: props.maxResults
     }
-    
+
     const searchResults = performSearch(searchOptions)
     results.value = searchResults
     suggestions.value = []
-    
+
     emit('search', searchQuery, searchResults)
   } catch (error) {
     console.error('Search error:', error)
@@ -70,6 +70,11 @@ const debouncedSearch = debounce(async (searchQuery: string) => {
   } finally {
     isLoading.value = false
   }
+}
+
+// Perform search with debouncing
+const debouncedSearch = debounce(async (searchQuery: string) => {
+  await performImmediateSearch(searchQuery)
 }, 300)
 
 // Handle input changes
@@ -158,6 +163,14 @@ const clearSearch = () => {
   emit('clear')
 }
 
+// Handle search button click
+const handleSearchClick = () => {
+  if (query.value.trim()) {
+    showDropdown.value = true
+    performImmediateSearch(query.value.trim())
+  }
+}
+
 // Lifecycle hooks
 onMounted(() => {
   document.addEventListener('click', handleClickOutside)
@@ -184,22 +197,6 @@ defineExpose({
   >
     <!-- Search Input -->
     <div class="search-input-wrapper">
-      <div class="search-input-icon">
-        <svg 
-          class="w-5 h-5 text-gray-400" 
-          fill="none" 
-          stroke="currentColor" 
-          viewBox="0 0 24 24"
-        >
-          <path 
-            stroke-linecap="round" 
-            stroke-linejoin="round" 
-            stroke-width="2" 
-            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-          />
-        </svg>
-      </div>
-      
       <input
         ref="searchInput"
         v-model="query"
@@ -211,15 +208,26 @@ defineExpose({
         @keydown="handleKeyDown"
         @focus="showDropdown = true"
       />
-      
+
       <button
-        v-if="query"
-        @click="clearSearch"
-        class="search-clear-btn"
-        aria-label="Clear search"
+        @click="handleSearchClick"
+        class="search-button"
+        type="button"
+        title="Search"
       >
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 16 16"
+          fill="none"
+        >
+          <path
+            d="M7.333 12.667A5.333 5.333 0 1 0 7.333 2a5.333 5.333 0 0 0 0 10.667ZM14 14l-2.9-2.9"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
         </svg>
       </button>
     </div>
@@ -315,62 +323,75 @@ defineExpose({
 }
 
 .search-input-wrapper {
-  position: relative;
   display: flex;
   align-items: center;
-}
-
-.search-input-icon {
-  position: absolute;
-  left: 12px;
-  z-index: 1;
-  pointer-events: none;
+  gap: 0.5rem;
+  width: 100%;
 }
 
 .search-input {
-  width: 100%;
-  padding: 12px 16px 12px 44px;
-  border: 2px solid #e5e7eb;
-  border-radius: 12px;
-  font-size: 16px;
-  background-color: white;
-  transition: all 0.2s ease;
+  flex: 1;
+  min-width: 0;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background-color: #ffffff;
+  color: #374151;
   outline: none;
+  transition: all 0.2s ease;
 }
 
 .search-input:focus {
-  border-color: #93c5fd;
-  box-shadow: 0 0 0 3px rgba(147, 197, 253, 0.1);
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
-.search-clear-btn {
-  position: absolute;
-  right: 12px;
-  padding: 4px;
-  color: #6b7280;
+.search-input::placeholder {
+  color: #9ca3af;
+}
+
+.search-button {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #3b82f6;
   border: none;
-  background: none;
-  cursor: pointer;
   border-radius: 6px;
+  color: #ffffff;
+  cursor: pointer;
   transition: all 0.2s ease;
 }
 
-.search-clear-btn:hover {
-  color: #374151;
-  background-color: #f3f4f6;
+.search-button:hover {
+  background-color: #2563eb;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.search-button:active {
+  transform: translateY(0);
+}
+
+.search-button svg {
+  flex-shrink: 0;
 }
 
 .search-dropdown {
   position: absolute;
-  top: 100%;
+  bottom: 100%;
   left: 0;
   right: 0;
   z-index: 50;
   background: white;
   border: 1px solid #e5e7eb;
   border-radius: 12px;
-  box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  margin-top: 4px;
+  box-shadow: 0 -10px 25px -3px rgba(0, 0, 0, 0.1), 0 -4px 6px -2px rgba(0, 0, 0, 0.05);
+  margin-bottom: 4px;
   max-height: 400px;
   overflow-y: auto;
 }
@@ -516,13 +537,24 @@ defineExpose({
 /* Mobile optimizations */
 @media (max-width: 768px) {
   .search-input {
-    font-size: 16px; /* Prevents zoom on iOS */
+    font-size: 0.8rem;
+    padding: 0.45rem 0.6rem;
   }
-  
+
+  .search-button {
+    width: 32px;
+    height: 32px;
+  }
+
+  .search-button svg {
+    width: 14px;
+    height: 14px;
+  }
+
   .search-dropdown {
     max-height: 300px;
   }
-  
+
   .search-result-tags {
     display: none;
   }

@@ -37,13 +37,13 @@ function createDepthGradientTexture(color1: string, color2: string, width: numbe
 
 // Page metadata for search indexing
 const pageMetadata = {
-  id: 'topic2-page1',
-  title: 'Two Ommatidia Lateral Inhibition Simulation',
-  content: 'Interactive 3D visualization of two neighboring ommatidia (eccentric cells) from the horseshoe crab compound eye, demonstrating lateral inhibition with NEURON simulation data.',
-  excerpt: 'Visualizing lateral inhibition in horseshoe crab ommatidia with live voltage data.',
-  path: '/topic2/page1',
-  tags: ['neuroscience', 'lateral-inhibition', 'ommatidia', 'horseshoe-crab', 'NEURON', 'simulation', 'voltage'],
-  category: 'Neuroscience',
+  id: 'ommatidia-lateral-inhibition-simulation',
+  title: 'Lateral Inhibition Simulation',
+  content: 'Interactive 3D NEURON simulation demonstrating lateral inhibition between two neighboring eccentric cells from horseshoe crab ommatidia. Watch voltage changes in real-time as coupled neurons respond to light stimulation. Toggle between two-cell and single-cell views to compare inhibitory interactions. Features playback controls with adjustable animation speed (0.25x to 2x) to explore the 200ms simulation in detail. This visualization brings Hartline\'s lateral inhibition concept to life with computational neuroscience.',
+  excerpt: 'Interactive NEURON simulation of lateral inhibition in horseshoe crab eccentric cells with real-time voltage visualization',
+  path: '/topic2',
+  tags: ['neuroscience', 'lateral-inhibition', 'ommatidia', 'horseshoe-crab', 'NEURON', 'simulation', 'voltage', 'eccentric-cells', 'computational-neuroscience', '3d-visualization'],
+  category: 'Computational Neuroscience',
   type: 'page' as const,
   metadata: {
     chapter: 'Chapter 2',

@@ -5,12 +5,12 @@ import StickyStoryBlocks from '../components/StickyStoryBlocks.vue'
 import type { StoryBlockGroup, CardActivationEvent, StoryItem, HeadingItem } from '../types/stickyStoryBlocks'
 
 const pageMetadata = {
-  id: 'topic1-page1',
+  id: 'visual-receptors-retinal-interaction',
   title: 'Visual receptors and retinal interaction',
-  content: 'The Nobel Prize in Physiology or Medicine in 1967 was awarded jointly to Haldan Keffer Hartline, Ragnar Granit, and George Wald for their discoveries concerning visual processes. In his Nobel Lecture, Hartline explains his work on the concept of lateral inhibition, a defining characteristic of retinal interactions that demonstrates the importance of contrast in visual processing.',
-  excerpt: 'the basic mechanism of the receptor is one that emphasizes change.',
-  path: '/topic1/page1',
-  tags: ['model organisms', 'vision', 'retina', 'lateral-inhibition'],
+  content: 'Explore H. K. Hartline\'s Nobel Prize-winning research on visual processing using Limulus polyphemus (horseshoe crab) as a model organism. This article covers the experimental setup for studying single optic nerve fibers, the discovery of sensory adaptation in visual receptors, and the groundbreaking concept of lateral inhibition in the retina. Learn how Hartline\'s work demonstrated that the basic mechanism of the receptor emphasizes change rather than steady state.',
+  excerpt: 'Hartline\'s Nobel Prize research on lateral inhibition and visual receptors using horseshoe crab ommatidia',
+  path: '/topic1',
+  tags: ['model-organisms', 'vision', 'retina', 'lateral-inhibition', 'hartline', 'limulus', 'ommatidia', 'sensory-adaptation'],
   category: 'Senses',
   type: 'page' as const,
   metadata: {

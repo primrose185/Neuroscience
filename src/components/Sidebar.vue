@@ -2,7 +2,14 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import SearchBar from './SearchBar.vue'
+import GoogleSearchBar from './GoogleSearchBar.vue'
 import type { SearchResult } from '../types/search'
+
+// Check if Google Search is enabled via environment variable
+const isGoogleSearchEnabled = import.meta.env.VITE_ENABLE_GOOGLE_SEARCH === 'true'
+
+// Search mode: 'local' or 'google'
+const searchMode = ref<'local' | 'google'>('local')
 
 interface MenuItem {
   id: string
@@ -108,59 +115,48 @@ const isExpanded = (itemId: string) => {
         <img src="/black.png" alt="Home" class="home-logo" />
       </button>
     </div>
-    
-    <!-- Search Section -->
-    <div class="sidebar-search">
-      <SearchBar
-        placeholder="Search topics..."
-        :compact="true"
-        :max-results="5"
-        @search="handleSearch"
-        @select="handleSearchSelect"
-      />
-    </div>
-    
+
     <!-- Navigation Menu -->
     <div class="sidebar-content">
       <ul class="sidebar-menu">
         <li v-for="item in menuItems" :key="item.id" class="menu-item">
           <!-- Main menu item -->
-          <div 
+          <div
             class="menu-item-content"
             :class="{ 'has-children': item.children?.length }"
             @click="handleMenuClick(item)"
           >
             <span class="menu-item-title">{{ item.title }}</span>
-            <svg 
-              v-if="item.children?.length" 
+            <svg
+              v-if="item.children?.length"
               class="expand-icon"
               :class="{ 'expanded': isExpanded(item.id) }"
-              width="12" 
-              height="12" 
-              viewBox="0 0 12 12" 
+              width="12"
+              height="12"
+              viewBox="0 0 12 12"
               fill="none"
             >
-              <path 
-                d="M4.5 3L7.5 6L4.5 9" 
-                stroke="currentColor" 
-                stroke-width="1.5" 
-                stroke-linecap="round" 
+              <path
+                d="M4.5 3L7.5 6L4.5 9"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
                 stroke-linejoin="round"
               />
             </svg>
           </div>
-          
+
           <!-- Submenu -->
-          <ul 
-            v-if="item.children?.length && isExpanded(item.id)" 
+          <ul
+            v-if="item.children?.length && isExpanded(item.id)"
             class="submenu"
           >
-            <li 
-              v-for="child in item.children" 
+            <li
+              v-for="child in item.children"
               :key="child.id"
               class="submenu-item"
             >
-              <div 
+              <div
                 class="submenu-item-content"
                 @click="handleMenuClick(child)"
               >
@@ -170,6 +166,43 @@ const isExpanded = (itemId: string) => {
           </ul>
         </li>
       </ul>
+    </div>
+
+    <!-- Search Section (above Utilities) -->
+    <div class="sidebar-search">
+      <!-- Search Mode Toggle (only show if Google Search is enabled) -->
+      <div v-if="isGoogleSearchEnabled" class="search-mode-toggle">
+        <button
+          :class="['mode-button', { active: searchMode === 'local' }]"
+          @click="searchMode = 'local'"
+          title="Search within this site"
+        >
+          📚 Local
+        </button>
+        <button
+          :class="['mode-button', { active: searchMode === 'google' }]"
+          @click="searchMode = 'google'"
+          title="Search with Google"
+        >
+          🔍 Google
+        </button>
+      </div>
+
+      <!-- Local Search -->
+      <div v-show="searchMode === 'local'" class="search-container">
+        <SearchBar
+          placeholder="Search topics..."
+          :compact="true"
+          :max-results="5"
+          @search="handleSearch"
+          @select="handleSearchSelect"
+        />
+      </div>
+
+      <!-- Google Search (only show if enabled) -->
+      <div v-if="isGoogleSearchEnabled" v-show="searchMode === 'google'" class="search-container">
+        <GoogleSearchBar />
+      </div>
     </div>
 
     <!-- Utilities Section -->
@@ -400,14 +433,53 @@ const isExpanded = (itemId: string) => {
 
 .sidebar-search {
   padding: 16px 24px;
+  border-top: 1px solid #f3f4f6;
   border-bottom: 1px solid #f3f4f6;
   flex-shrink: 0;
+  margin-top: auto;
+}
+
+/* Search Mode Toggle */
+.search-mode-toggle {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  background-color: #f3f4f6;
+  padding: 0.25rem;
+  border-radius: 8px;
+}
+
+.mode-button {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #6b7280;
+  background-color: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.mode-button:hover {
+  color: #374151;
+  background-color: rgba(255, 255, 255, 0.5);
+}
+
+.mode-button.active {
+  color: #1f2937;
+  background-color: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.search-container {
+  width: 100%;
 }
 
 /* Utilities Section */
 .sidebar-utilities {
-  border-top: 1px solid #f3f4f6;
-  margin-top: auto;
   flex-shrink: 0;
 }
 

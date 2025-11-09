@@ -10,16 +10,16 @@ import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPa
 const pageMetadata = {
   id: 'platform-guide',
   title: 'Platform Guide',
-  content: 'Learn how to navigate and make the most of this neuroscience learning platform. This guide covers getting started, navigation, search features, and platform overview.',
-  excerpt: 'Complete guide to using the neuroscience learning platform effectively.',
+  content: 'Welcome to nREM (neuroscience Research Explained Modestly) - where complex neuroscience is simplified through immersive 3D visualizations. Learn how to interact with scroll-activated 3D models embedded in articles, use the expand icon (「｣) to explore models in detail, view footnotes for additional research context, and navigate the platform. This guide demonstrates interactive features using a neuron model with voltage animations and bloom effects. Discover how nREM transforms neuroscience education through observation and visualization.',
+  excerpt: 'Interactive guide to using nREM\'s 3D visualization platform for neuroscience education',
   path: '/platform-guide',
-  tags: ['guide', 'navigation', 'help', 'tutorial'],
+  tags: ['guide', 'navigation', 'help', 'tutorial', 'how-to', '3d-models', 'platform', 'nrem'],
   category: 'Help',
   type: 'page' as const,
   metadata: {
     chapter: 'Help',
     difficulty: 'beginner' as const,
-    estimatedReadTime: 3
+    estimatedReadTime: 5
   }
 }
 

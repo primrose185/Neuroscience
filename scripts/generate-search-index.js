@@ -80,11 +80,53 @@ function extractPageMetadata(filePath) {
 
 /**
  * Extract a string field value from metadata string
+ * Handles escaped quotes properly
  */
 function extractField(str, fieldName) {
-  const regex = new RegExp(`${fieldName}:\\s*['"\`]([^'"\`]*?)['"\`]`, 's')
-  const match = str.match(regex)
-  return match ? match[1] : ''
+  // Try to find the field with single quotes
+  const singleQuoteRegex = new RegExp(`${fieldName}:\\s*'`, 's')
+  const singleMatch = str.match(singleQuoteRegex)
+
+  if (singleMatch) {
+    const startIndex = singleMatch.index + singleMatch[0].length
+    let endIndex = startIndex
+    let escaped = false
+
+    // Find the matching closing quote, handling escapes
+    while (endIndex < str.length) {
+      if (str[endIndex] === '\\' && !escaped) {
+        escaped = true
+      } else if (str[endIndex] === '\'' && !escaped) {
+        return str.substring(startIndex, endIndex)
+      } else {
+        escaped = false
+      }
+      endIndex++
+    }
+  }
+
+  // Try with double quotes
+  const doubleQuoteRegex = new RegExp(`${fieldName}:\\s*"`, 's')
+  const doubleMatch = str.match(doubleQuoteRegex)
+
+  if (doubleMatch) {
+    const startIndex = doubleMatch.index + doubleMatch[0].length
+    let endIndex = startIndex
+    let escaped = false
+
+    while (endIndex < str.length) {
+      if (str[endIndex] === '\\' && !escaped) {
+        escaped = true
+      } else if (str[endIndex] === '"' && !escaped) {
+        return str.substring(startIndex, endIndex)
+      } else {
+        escaped = false
+      }
+      endIndex++
+    }
+  }
+
+  return ''
 }
 
 /**
@@ -139,23 +181,33 @@ function generateSearchUtilsContent(metadataArray) {
   metadataArray.sort((a, b) => a.path.localeCompare(b.path))
 
   const metadataStrings = metadataArray.map(meta => {
+    // Helper function to properly escape strings for JavaScript
+    const escapeString = (str) => {
+      if (!str) return ''
+      return str
+        .replace(/\\/g, '\\\\')  // Escape backslashes first
+        .replace(/'/g, "\\'")     // Escape single quotes
+        .replace(/\n/g, '\\n')    // Escape newlines
+        .replace(/\r/g, '\\r')    // Escape carriage returns
+    }
+
     const metadataObj = meta.metadata ? `{
-    chapter: '${meta.metadata.chapter || ''}',
-    difficulty: '${meta.metadata.difficulty || 'beginner'}',
+    chapter: '${escapeString(meta.metadata.chapter || '')}',
+    difficulty: '${escapeString(meta.metadata.difficulty || 'beginner')}',
     estimatedReadTime: ${meta.metadata.estimatedReadTime || 5}
   }` : '{}'
 
-    const tags = meta.tags.map(tag => `'${tag}'`).join(', ')
+    const tags = meta.tags.map(tag => `'${escapeString(tag)}'`).join(', ')
 
     return `  {
-    id: '${meta.id}',
-    title: '${meta.title}',
-    content: '${meta.content.replace(/'/g, "\\'")}',
-    excerpt: '${meta.excerpt.replace(/'/g, "\\'")}',
-    path: '${meta.path}',
+    id: '${escapeString(meta.id)}',
+    title: '${escapeString(meta.title)}',
+    content: '${escapeString(meta.content)}',
+    excerpt: '${escapeString(meta.excerpt)}',
+    path: '${escapeString(meta.path)}',
     tags: [${tags}],
-    category: '${meta.category}',
-    type: '${meta.type}',
+    category: '${escapeString(meta.category)}',
+    type: '${escapeString(meta.type)}',
     metadata: ${metadataObj}
   }`
   })

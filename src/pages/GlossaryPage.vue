@@ -3,10 +3,10 @@
 const pageMetadata = {
   id: 'glossary',
   title: 'Glossary',
-  content: 'Comprehensive glossary of neuroscience and mathematical terms used throughout the platform. Find definitions, explanations, and related concepts for key terminology.',
-  excerpt: 'Definitions and explanations of key neuroscience and mathematical terms.',
+  content: 'Comprehensive glossary of neuroscience and mathematical terms used throughout the nREM platform. Currently under development, this resource will include neuroscience terminology, mathematical concepts and formulas, statistical methods, and research techniques. Browse by category including neuroscience terms, mathematical concepts, statistical methods, and research techniques. The glossary will feature interactive cross-references and visual examples to help clarify complex terminology.',
+  excerpt: 'Comprehensive reference for neuroscience and mathematical terminology (coming soon)',
   path: '/glossary',
-  tags: ['glossary', 'definitions', 'terminology', 'reference'],
+  tags: ['glossary', 'definitions', 'terminology', 'reference', 'dictionary', 'neuroscience-terms', 'mathematics'],
   category: 'Reference',
   type: 'page' as const,
   metadata: {
